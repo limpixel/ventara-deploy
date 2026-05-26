@@ -17,7 +17,7 @@ export default function TrainingBanner() {
         <div className="flex items-center gap-3 px-4 py-3 bg-indigo-600">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
           <span className="text-sm font-semibold">Training Model</span>
-          <span className="ml-auto text-xs bg-indigo-500 px-2 py-0.5 rounded-full truncate max-w-[120px]">
+          <span className="ml-auto text-xs bg-indigo-500 px-2 py-0.5 rounded-full truncate max-w-30">
             {training.step}
           </span>
         </div>

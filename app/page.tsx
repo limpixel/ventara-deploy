@@ -1,86 +1,54 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
-const USERS = [
-  { username: "user", password: "user123", role: "user", name: "Kakang Kukung" },
-  { username: "admin", password: "admin123", role: "admin", name: "Administrator" },
-];
+import LoginForm from "@/app/components/login/LoginForm";
+import RegisterForm from "@/app/components/login/RegisterForm";
+import LandingPanel from "@/app/components/login/LandingPanel";
+import OverlayPanel from "@/app/components/login/OverlayPanel";
+import { useAuth } from "@/app/hooks/useAuth";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const {
+    view,
+    setView,
+    handleLogin,
+    handleRegister,
+    handleForgotPassword,
+    isError,
+  } = useAuth();
 
-  function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+  return (
+    <div className="relative w-screen h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#dff7f3,#ccebe6,#eafaf7)]">
+      {/* AMBIENT LIGHT */}
+      <div className="absolute w-125 h-125 bg-[#00a991]/20 blur-[120px] rounded-full -top-30 -left-25" />
+      <div className="absolute w-100 h-100 bg-[#008774]/10 blur-[120px] rounded-full -bottom-30 -right-25" />
 
-    const found = USERS.find(
-      (u) => u.username === username && u.password === password
-    );
+      {/* MAIN CONTAINER */}
+      <div className="relative w-full h-full overflow-hidden bg-teal-300">
 
-    if (!found) {
-      setError("Username atau password salah");
-      return;
-    }
-
-    setLoading(true);
-    localStorage.setItem("ventara_role", found.role);
-    localStorage.setItem("ventara_name", found.name);
-
-    setTimeout(() => {
-      router.push(found.role === "admin" ? "/admin/dashboard" : "/forecasting");
-    }, 800);
-  }
-
-
-   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-teal-700">Ventara Forecast</h1>
-          <p className="text-sm text-gray-500 mt-2">Sistem Peramalan Energi Angin</p>
+        {/* OVERLAY PANEL */}
+        <div className={`absolute top-0 w-1/2 h-full z-20 transition-all duration-700 ease-in-out ${view === 'login' ? 'left-1/2' : 'left-0'}`}>
+          <div className="relative w-full h-full shadow-[0_20px_45px_rgba(0,169,145,0.35)] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_60%)] before:pointer-events-none">
+            <OverlayPanel isError={isError} isLogin={view === 'login'} />
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Masukkan username"
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none focus:ring-2 focus:ring-teal-500 text-black"
-            />
+        {/* RIGHT CONTENT */}
+        <div className={`absolute top-0 w-1/2 h-full right-0 flex items-start justify-center pt-24 transition-all duration-700 ${view === 'login' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          {/* LANDING */}
+          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${view === 'landing' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5 pointer-events-none'}`}>
+            <LandingPanel onStart={() => setView('login')} />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Masukkan password"
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none focus:ring-2 focus:ring-teal-500 text-black"
-            />
+          {/* REGISTER */}
+          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${view === 'register' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5 pointer-events-none'}`}>
+            <RegisterForm onRegister={handleRegister} onSwitch={() => setView('login')} />
           </div>
+        </div>
 
-          {error && (
-            <p className="text-sm text-red-500 text-center">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-teal-600 hover:bg-teal-700 transition-colors text-white font-semibold py-3 rounded-xl"
-          >
-            {loading ? "Loading..." : "Login"}
-          </button>
-        </form>
+        {/* LOGIN */}
+        <div className={`absolute top-0 left-0 w-1/2 h-full flex items-center justify-center transition-all duration-700 ${view === 'login' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <LoginForm onLogin={handleLogin} onSwitch={() => setView('register')} onForgotPassword={handleForgotPassword} />
+        </div>
       </div>
     </div>
   );
