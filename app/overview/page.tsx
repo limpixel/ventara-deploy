@@ -56,16 +56,17 @@ export default function OverviewPage() {
 
             <OverviewHeader />
 
-            <ForecastChart
-              labels={labels}
-              actualData={actualData}
-              datasets={datasets}
-            />
-
             <NLPResult
               nlpReport={nlpReport}
               generateMode={generateMode}
               onReset={() => setNlpReport("")}
+              hideActions
+            />
+
+            <ForecastChart
+              labels={labels}
+              actualData={actualData}
+              datasets={datasets}
             />
 
           </div>

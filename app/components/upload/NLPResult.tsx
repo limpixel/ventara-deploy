@@ -4,12 +4,14 @@ interface Props {
   nlpReport: string;
   generateMode?: "general" | "best"; // ← tambah
   onReset?: () => void; // ← tambah
+  hideActions?: boolean; // ← tambah
 }
 
 export default function NLPResult({
   nlpReport,
   generateMode = "general", 
-  onReset
+  onReset,
+  hideActions = false,
 }: Props) {
   return (
     <div className="bg-white border-2 border-teal-300 rounded-xl p-6">
@@ -40,6 +42,7 @@ export default function NLPResult({
           </p>
 
           {/* ACTIONS */}
+          {!hideActions && (  
           <div className="mt-4 pt-4 border-t border-teal-100 flex gap-3">
             <button
               onClick={() => downloadCsv(generateMode)}
@@ -66,6 +69,7 @@ export default function NLPResult({
               Reset
             </button>
           </div>
+          )}
         </div>
       </div>
     </div> 

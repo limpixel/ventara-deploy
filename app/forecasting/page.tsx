@@ -171,6 +171,22 @@ export default function ForecastingPage() {
                         setGenerateMode(selectedModel as "general" | "best");
                         setUiState("nlp");
                         setNlpReport(nlpReport);
+
+                        // ← tambah ini
+                        const newEntry = {
+                          id: Date.now(),
+                          waktu: new Date().toLocaleString("id-ID"),
+                          file: dataset_name,
+                          algo: selectedModel,
+                          periode: "7 Hari",
+                          nlp_report: nlpReport,
+                          status: "Selesai"
+                        };
+                        const existing = JSON.parse(localStorage.getItem("ventara_history") || "[]");
+                        existing.unshift(newEntry);
+                        localStorage.setItem("ventara_history", JSON.stringify(existing));
+                        // ← sampai sini
+
                         localStorage.setItem("ventara_ui_state", "nlp");
                         localStorage.setItem("ventara_nlp_report", nlpReport);
                       }

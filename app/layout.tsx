@@ -4,10 +4,13 @@ import { Inter } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
-import { TrainingProvider } from "@/app/context/TrainingContext";      // ← ADD
-import TrainingBanner from "@/app/components/training/TrainingBanner"; // ← ADD
+import { TrainingProvider } from "@/app/context/TrainingContext";
+import TrainingBanner from "@/app/components/training/TrainingBanner";
+
 import { GenerateProvider } from "@/app/context/GenerateContext";
 import GenerateBanner from "@/app/components/training/GenerateBanner";
+
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,13 +39,18 @@ export default function RootLayout({
           text-gray-900
         `}
       >
+        {/* TOASTER */}
+        <Toaster position="bottom-right" />
+
         <TrainingProvider>
-        <GenerateProvider>  {/* ← tambah */}
-          {children}
-          <TrainingBanner />
-          <GenerateBanner /> {/* ← toast generate global */}
-        </GenerateProvider>
-      </TrainingProvider>
+          <GenerateProvider>
+            {children}
+
+            <TrainingBanner />
+            <GenerateBanner />
+          </GenerateProvider>
+        </TrainingProvider>
+
       </body>
     </html>
   );

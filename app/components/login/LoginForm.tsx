@@ -21,13 +21,13 @@ export default function LoginForm({
     <div className="relative w-full h-full overflow-hidden bg-[linear-gradient(135deg,#163832_0%,#1f4d45_28%,#2d6a5f_58%,#3f8f7f_100%)] flex justify-center items-center p-10 px-14">
 
       {/* TOP GLOW */}
-      <div className="absolute top-[-120px] left-[-80px] w-[280px] h-[280px] rounded-full bg-white/10 blur-[100px]" />
+      <div className="absolute -top-30 -left-20 w-70 h-70 rounded-full bg-white/10 blur-[100px]" />
 
       {/* BOTTOM GLOW */}
-      <div className="absolute bottom-[-120px] right-[-80px] w-[280px] h-[280px] rounded-full bg-emerald-300/10 blur-[100px]" />
+      <div className="absolute -bottom-30 -right-20 w-70 h-70 rounded-full bg-emerald-300/10 blur-[100px]" />
 
       {/* GRID */}
-      <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[size:42px_42px]" />
+      <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-size-[42px_42px]" />
 
       {/* FORM */}
       <form
@@ -35,7 +35,7 @@ export default function LoginForm({
           e.preventDefault();
           onLogin(username, password);
         }}
-        className="relative z-10 w-full max-w-[420px]"
+        className="relative z-10 w-full max-w-105"
       >
 
         {/* TITLE */}
@@ -121,7 +121,7 @@ export default function LoginForm({
           className="group relative w-full py-3.5 rounded-xl bg-white text-[#163832] font-semibold text-sm overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:bg-[#f4fffb] active:scale-[0.98] shadow-[0_10px_30px_rgba(255,255,255,0.12)]"
         >
           <span className="relative z-10">Sign In</span>
-          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-black/5 to-transparent" />
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-linear-to-r from-transparent via-black/5 to-transparent" />
         </button>
 
         {/* DIVIDER */}

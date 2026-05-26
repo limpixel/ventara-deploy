@@ -1,4 +1,5 @@
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function OverviewHeader() {
   return (
@@ -25,7 +26,59 @@ export default function OverviewHeader() {
 
       {/* RIGHT */}
       <div className="flex gap-3">
-        <button className="bg-teal-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-teal-600 transition">
+        <button
+          onClick={() => {
+            try {
+
+              const oldData = JSON.parse(
+                localStorage.getItem("ventara_history") || "[]"
+              );
+
+              const newItem = {
+                id: Date.now(),
+
+                waktu: new Date().toLocaleString("id-ID"),
+
+                file: "NASA_Baron_Hourly.csv",
+
+                algo: "BI-LSTM",
+
+                periode: "1 Jam",
+
+                hasil: [
+                  {
+                    label: "BiLSTM:",
+                    value: "14.30 MW",
+                  },
+                ],
+
+                status: "Selesai",
+
+                nlp_report:
+                  "Prediksi menunjukkan angin stabil dengan performa model tinggi.",
+              };
+
+              localStorage.setItem(
+                "ventara_history",
+                JSON.stringify([newItem, ...oldData])
+              );
+
+              toast.success(
+                "Data berhasil disimpan ke historis"
+              );
+
+            } catch (error) {
+
+              console.error(error);
+
+              toast.error(
+                "Gagal menyimpan data historis"
+              );
+            }
+          }}
+
+          className="bg-teal-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-teal-600 transition"
+        >
           Simpan ke Historis
         </button>
 

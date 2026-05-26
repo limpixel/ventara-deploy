@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
 
@@ -12,81 +12,17 @@ interface HasilItem {
   value: string;
 }
 
+// Tambah nlp_report di interface
 interface HistorisItem {
   id: number;
   waktu: string;
   file: string;
-  algo: AlgoKey;
+  algo: string;        // ← ganti dari AlgoKey biar fleksibel
   periode: string;
   hasil: HasilItem[];
   status: StatusKey;
+  nlp_report?: string; // ← tambah
 }
-
-const DUMMY_DATA: HistorisItem[] = [
-  {
-    id: 1,
-    waktu: "28/4/2026, 00.49.53",
-    file: "NASA Pandeglang Hourly.csv",
-    algo: "BI-LSTM",
-    periode: "1 Jam",
-    hasil: [
-      { label: "XGBoost:", value: "22.91 MW" },
-      { label: "GBR:", value: "13.84 MW" },
-      { label: "KNN:", value: "21.69 MW" },
-    ],
-    status: "Selesai",
-  },
-  {
-    id: 2,
-    waktu: "27/4/2026, 18.32.10",
-    file: "NASA Bawean Hourly Full.csv",
-    algo: "XGB-LSTM",
-    periode: "7 Hari",
-    hasil: [
-      { label: "XGB Base:", value: "9.14 MW" },
-      { label: "Stacked:", value: "9.52 MW" },
-    ],
-    status: "Selesai",
-  },
-  {
-    id: 3,
-    waktu: "27/4/2026, 14.11.05",
-    file: "NASA Bawean Hourly Full.csv",
-    algo: "LSTM",
-    periode: "7 Hari",
-    hasil: [
-      { label: "LSTM:", value: "8.87 MW" },
-      { label: "GBR:", value: "9.03 MW" },
-      { label: "KNN:", value: "8.61 MW" },
-    ],
-    status: "Selesai",
-  },
-  {
-    id: 4,
-    waktu: "26/4/2026, 09.05.44",
-    file: "NASA Sulawesi Hourly.csv",
-    algo: "XGBoost",
-    periode: "1 Jam",
-    hasil: [
-      { label: "XGBoost:", value: "11.20 MW" },
-      { label: "GBR:", value: "10.95 MW" },
-    ],
-    status: "Error",
-  },
-  {
-    id: 5,
-    waktu: "25/4/2026, 22.50.17",
-    file: "NASA Pandeglang Hourly.csv",
-    algo: "BI-LSTM",
-    periode: "7 Hari",
-    hasil: [
-      { label: "BiLSTM:", value: "14.30 MW" },
-      { label: "LSTM:", value: "13.98 MW" },
-      { label: "GBR:", value: "12.77 MW" },
-    ],
-    status: "Selesai",
-  },
-];
 
 const ALGO_STYLE: Record<AlgoKey, string> = {
   "BI-LSTM":  "bg-blue-50 text-blue-700",
@@ -109,9 +45,18 @@ const STATUS_DOT: Record<StatusKey, string> = {
 
 export default function HistorisPage() {
   const [search, setSearch] = useState("");
+  const [data, setData] = useState<HistorisItem[]>([]);         // ← tambah
+  const [detailItem, setDetailItem] = useState<HistorisItem | null>(null); // ← tambah
 
-  const filtered = DUMMY_DATA.filter((d) => {
-    const q = search.toLowerCase();
+  // ← tambah ini
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("ventara_history") || "[]");
+    setData(saved);
+  }, []);
+
+  // ganti DUMMY_DATA jadi data
+  const filtered = data.filter((d) => {
+  const q = search.toLowerCase();
     return (
       d.file.toLowerCase().includes(q) ||
       d.algo.toLowerCase().includes(q) ||
@@ -189,7 +134,7 @@ export default function HistorisPage() {
                       <td className="px-4 py-4 text-xs text-gray-500">{row.waktu}</td>
                       <td className="px-4 py-4 text-sm text-gray-700">{row.file}</td>
                       <td className="px-4 py-4">
-                        <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-md ${ALGO_STYLE[row.algo]}`}>
+                        <span className={`... ${ALGO_STYLE[row.algo as AlgoKey] ?? "bg-gray-50 text-gray-700"}`}>
                           {row.algo}
                         </span>
                       </td>
@@ -213,6 +158,7 @@ export default function HistorisPage() {
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button
+                            onClick={() => setDetailItem(row)}
                             className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
                             title="Lihat detail"
                           >
@@ -239,6 +185,27 @@ export default function HistorisPage() {
           </div>
           </div>
         </div>
+        {detailItem && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-gray-900">Detail Prediksi</h3>
+                <button
+                  onClick={() => setDetailItem(null)}
+                  className="text-gray-400 hover:text-gray-600 text-lg"
+                >✕</button>
+              </div>
+              <p className="text-xs text-gray-500 mb-1">
+                {detailItem.waktu} • {detailItem.file}
+              </p>
+              <div className="mt-3 p-4 bg-teal-50 rounded-xl border border-teal-100">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {detailItem.nlp_report || "Tidak ada laporan AI tersedia."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
