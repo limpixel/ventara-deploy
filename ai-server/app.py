@@ -150,6 +150,15 @@ print(
     f"DL={list(metrics_dl.keys())}"
 )
 
+
+# =========================
+# SAVING HISTORY
+# =========================
+from routes.history import history_bp
+
+app.register_blueprint(history_bp)
+
+
 # =========================
 # RUN APP
 # =========================

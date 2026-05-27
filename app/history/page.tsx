@@ -50,9 +50,34 @@ export default function HistorisPage() {
 
   // ← tambah ini
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("ventara_history") || "[]");
-    setData(saved);
-  }, []);
+
+  async function fetchHistory() {
+
+    try {
+
+      const res = await fetch(
+        "http://localhost:5000/get_history",
+        {
+          credentials: "include",
+        }
+      );
+
+      const json = await res.json();
+
+      setData(json);
+
+    } catch (error) {
+
+      console.error(
+        "Failed to fetch history:",
+        error
+      );
+    }
+  }
+
+  fetchHistory();
+
+}, []);
 
   // ganti DUMMY_DATA jadi data
   const filtered = data.filter((d) => {

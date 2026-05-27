@@ -17,17 +17,17 @@ import { useGenerateContext } from "@/app/context/GenerateContext";
 
 
 export default function ForecastingPage() {
-  const [selectedModel, setSelectedModel] = useState("all");
+  const [ selectedModel, setSelectedModel] = useState("all");
 
   const { dataset_name, metrics, best_models, loading } = useMetrics();
 
-  const [generateMode, setGenerateMode] = useState<"general" | "best">("general");
+  const [ generateMode, setGenerateMode] = useState<"general" | "best">("general");
 
   const { generate, startGenerate } = useGenerateContext();
 
-  const [uiState, setUiState] = useState<"idle" | "loading" | "nlp">("idle");
+  const [ uiState, setUiState] = useState<"idle" | "loading" | "nlp">("idle");
 
-  const [nlpReport, setNlpReport] = useState("");
+  const [ nlpReport, setNlpReport] = useState("");
 
   useEffect(() => {
     const savedState = localStorage.getItem("ventara_ui_state") as "idle" | "loading" | "nlp" | null;
