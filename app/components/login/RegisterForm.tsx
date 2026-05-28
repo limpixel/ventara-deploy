@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { Bebas_Neue } from "next/font/google";
 import { Poppins } from "next/font/google";
@@ -66,27 +67,15 @@ export default function RegisterForm({ onRegister, onSwitch }: Props) {
             Username
           </label>
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 z-10">
+              <User className="w-4 h-4"/>
             </div>
             <input
               type="text"
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full py-3.5 pl-8 pr-5 rounded-xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder:text-white/40 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
+              className="w-full py-3.5 pl-12 pr-5 rounded-xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder:text-white/40 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
             />
           </div>
         </div>
@@ -97,27 +86,15 @@ export default function RegisterForm({ onRegister, onSwitch }: Props) {
             Email
           </label>
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 z-10">
+              <Mail className="w-4 h-4" />
             </div>
             <input
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full py-3.5 pl-8 pr-5 rounded-xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder:text-white/40 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
+              className="w-full py-3.5 pl-12 pr-5 rounded-xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder:text-white/40 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
             />
           </div>
         </div>
@@ -128,27 +105,15 @@ export default function RegisterForm({ onRegister, onSwitch }: Props) {
             Password
           </label>
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
+             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 z-10">
+              <Lock className="w-4 h-4" />
             </div>
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full py-3.5 pl-8 pr-12 rounded-xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder:text-white/40 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
+              className="w-full py-3.5 pl-12 pr-12 rounded-xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder:text-white/40 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
             />
             <button
               type="button"

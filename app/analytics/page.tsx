@@ -29,7 +29,9 @@ import {
   AlertCircle,
   ShieldAlert,
   ShieldX,
+  Navigation,
 } from "lucide-react";
+
 
 import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
@@ -43,91 +45,88 @@ const MapComponent = dynamic(
 // ─── Types ──────────────────────────────────────────────────────────────
 
 interface DailyData {
-  time: string[];
-  wind_speed_10m_max: number[];
-  wind_direction_10m_dominant: number[];
-  temperature_2m_max: number[];
-  temperature_2m_min: number[];
-  weathercode: number[];
-  weatherPrimary: string[];
+  time:                        string[]
+  wind_speed_10m_max:          number[]
+  wind_direction_10m_dominant: number[]
+  temperature_2m_max:          number[]
+  temperature_2m_min:          number[]
+  weathercode:                 number[]
+  weatherPrimary:              string[]
 }
 
 interface HourlyData {
-  time: string[];
-  temperature_2m: number[];
-  relativehumidity_2m: number[];
-  wind_speed_10m: number[];
+  time:                string[]
+  temperature_2m:      number[]
+  relativehumidity_2m: number[]
+  wind_speed_10m:      number[]
+  wind_direction_10m:  number[]
 }
 
-interface NewsItem {
-  title: string;
-  content: string;
-  xweather?: string;
-}
+interface NewsItem { title: string; content: string; xweather?: string }
 
 interface ModalData {
-  date: string;
-  dateISO: string;
-  windSpeed: number;
-  windKmh: number;
-  weatherCond: string;
-  temp: number;
-  energy: number;
+  date:        string
+  dateISO:     string
+  windSpeed:   number
+  windKmh:     number
+  weatherCond: string
+  temp:        number
+  energy:      number
 }
 
 // ─── NEW: Tipe output NLP dari /api/analytics/nlp ──────────────────────
 
 interface NlpSentimentBreakdown {
-  positif: number;
-  netral: number;
-  waspada: number;
-  berbahaya: number;
+  positif:   number
+  netral:    number
+  waspada:   number
+  berbahaya: number
 }
 
 interface NlpSentiment {
-  label: "baik" | "cukup" | "waspada" | "berbahaya";
-  score: number;
-  tone: string;
-  breakdown: NlpSentimentBreakdown;
+  label:     "baik" | "cukup" | "waspada" | "berbahaya"
+  score:     number
+  tone:      string
+  breakdown: NlpSentimentBreakdown
 }
 
 interface NlpHighlights {
-  warnings: string[];
-  positives: string[];
+  warnings:  string[]
+  positives: string[]
 }
 
 interface NlpConcept {
-  concept: string;
-  sentiment: "positif" | "netral" | "waspada" | "berbahaya";
-  humanLabel: string;
-  advice: string;
-  weight: number;
+  concept:    string
+  sentiment:  "positif" | "netral" | "waspada" | "berbahaya"
+  humanLabel: string
+  advice:     string
+  weight:     number
 }
 
 interface NlpOutput {
-  summary: string;
-  sentiment: NlpSentiment;
-  advice: string[];
-  highlights: NlpHighlights;
+  summary:    string
+  sentiment:  NlpSentiment
+  advice:     string[]
+  highlights: NlpHighlights
 }
 
 interface NlpPipelineResponse {
-  success: boolean;
-  location: string;
+  success:  boolean
+  location: string
   pipeline: {
-    step2_tokens: string[];
+    step2_tokens:  string[]
     step3_stemmed: {
-      concepts: NlpConcept[];
-      overallSentiment: NlpSentiment["label"];
-      overallScore: number;
-    };
-    step4_nlp: NlpOutput;
-  };
-  error?: string;
+      concepts:         NlpConcept[]
+      overallSentiment: NlpSentiment["label"]
+      overallScore:     number
+    }
+    step4_nlp: NlpOutput
+  }
+  error?: string
 }
 
-type ActiveView = "daily" | "trends";
-type TrendFilter = "hourly" | "dailyAgg";
+type ActiveView  = "daily" | "trends"
+type TrendFilter = "hourly" | "dailyAgg"
 
 // ─── Utilities ──────────────────────────────────────────────────────────
 
@@ -327,75 +326,49 @@ async function fetchDaily(lat: number, lng: number): Promise<DailyData> {
 }
 
 async function fetchHourly(lat: number, lng: number): Promise<HourlyData> {
-  const clientId = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_ID || "";
-  const clientSecret = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_SECRET || "";
-  const location = `${lat},${lng}`;
-  const url = `https://data.api.xweather.com/forecasts/${encodeURIComponent(location)}?filter=1hr&limit=168&fields=periods.dateTimeISO,periods.tempC,periods.humidity,periods.windSpeedMPS&client_id=${clientId}&client_secret=${clientSecret}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Gagal mengambil data per jam.");
-  const data = await res.json();
-  if (!data.success)
-    throw new Error(data.error?.description || "Gagal mengambil data per jam.");
+  const clientId     = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_ID     || ""
+  const clientSecret = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_SECRET || ""
+  const location     = `${lat},${lng}`
+  const url = `https://data.api.xweather.com/forecasts/${encodeURIComponent(location)}?filter=1hr&limit=168&fields=periods.dateTimeISO,periods.tempC,periods.humidity,periods.windSpeedKPH,periods.windDirDEG&client_id=${clientId}&client_secret=${clientSecret}`
+  const res  = await fetch(url)
+  if (!res.ok) throw new Error("Gagal mengambil data per jam.")
+  const data = await res.json()
+  if (!data.success) throw new Error(data.error?.description || "Gagal mengambil data per jam.")
 
   const hourly: HourlyData = {
-    time: [],
-    temperature_2m: [],
-    relativehumidity_2m: [],
-    wind_speed_10m: [],
-  };
-  const periods = data.response?.[0]?.periods;
-  if (periods) {
-    periods.forEach(
-      (p: {
-        dateTimeISO: string;
-        tempC: number;
-        humidity: number;
-        windSpeedMPS: number;
-      }) => {
-        hourly.time.push(p.dateTimeISO);
-        hourly.temperature_2m.push(p.tempC ?? 0);
-        hourly.relativehumidity_2m.push(p.humidity ?? 0);
-        hourly.wind_speed_10m.push(
-          parseFloat(((p.windSpeedMPS ?? 0) / 3.6).toFixed(1)),
-        );
-      },
-    );
+    time: [], temperature_2m: [], relativehumidity_2m: [], wind_speed_10m: [], wind_direction_10m: [],
   }
-  return hourly;
+  const periods = data.response?.[0]?.periods
+  if (periods) {
+    periods.forEach((p: { dateTimeISO: string; tempC: number; humidity: number; windSpeedKPH: number; windDirDEG: number }) => {
+      hourly.time.push(p.dateTimeISO)
+      hourly.temperature_2m.push(p.tempC ?? 0)
+      hourly.relativehumidity_2m.push(p.humidity ?? 0)
+      hourly.wind_speed_10m.push(parseFloat((p.windSpeedKPH ?? 0).toFixed(1)))
+      hourly.wind_direction_10m.push(p.windDirDEG ?? 0)
+    })
+  }
+  return hourly
 }
 
-async function searchLocationAPI(
-  query: string,
-): Promise<{ lat: number; lng: number; displayName: string }> {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "Ventara-Dashboard/2.0" },
-  });
-  const data = await res.json();
-  if (!data.length) throw new Error("Lokasi tidak ditemukan.");
-  return {
-    lat: parseFloat(data[0].lat),
-    lng: parseFloat(data[0].lon),
-    displayName: data[0].display_name.split(",")[0],
-  };
+async function searchLocationAPI(query: string): Promise<{ lat: number; lng: number; displayName: string }> {
+  const url  = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
+  const res  = await fetch(url, { headers: { "User-Agent": "Ventara-Dashboard/2.0" } })
+  const data = await res.json()
+  if (!data.length) throw new Error("Lokasi tidak ditemukan.")
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), displayName: data[0].display_name.split(",")[0] }
 }
 
-async function searchLocationSuggestions(
-  query: string,
-): Promise<{ lat: number; lng: number; displayName: string }[]> {
-  if (!query.trim() || query.length < 2) return [];
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "Ventara-Dashboard/2.0" },
-  });
-  const data = await res.json();
-  return data.map(
-    (item: { lat: string; lon: string; display_name: string }) => ({
-      lat: parseFloat(item.lat),
-      lng: parseFloat(item.lon),
-      displayName: item.display_name.split(",")[0],
-    }),
-  );
+async function searchLocationSuggestions(query: string): Promise<{ lat: number; lng: number; displayName: string }[]> {
+  if (!query.trim() || query.length < 2) return []
+  const url  = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+  const res  = await fetch(url, { headers: { "User-Agent": "Ventara-Dashboard/2.0" } })
+  const data = await res.json()
+  return data.map((item: { lat: string; lon: string; display_name: string }) => ({
+    lat: parseFloat(item.lat),
+    lng: parseFloat(item.lon),
+    displayName: item.display_name.split(",")[0],
+  }))
 }
 
 // ─── NEW: Ganti fetchXWeatherPhrase → fetchNlpAnalysis ──────────────────
@@ -408,28 +381,20 @@ async function fetchNlpAnalysis(
   lng: number,
   modalData: ModalData,
 ): Promise<NlpPipelineResponse> {
-  // Kirim koordinat sebagai location agar route.ts bisa fetch
-  // langsung ke xWeather conditions/summary dengan koordinat tersebut.
   const res = await fetch("/api/analytics/nlp", {
-    method: "POST",
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ location: `${lat},${lng}` }),
-  });
+    body:    JSON.stringify({ location: `${lat},${lng}`, dateISO: modalData.dateISO }),
+  })
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `NLP API error: ${res.status}`);
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || `NLP API error: ${res.status}`)
   }
 
-  const data: NlpPipelineResponse = await res.json();
-  if (!data.success) throw new Error(data.error || "NLP gagal diproses.");
-
-  // Inject windSpeed & weatherCond dari card yang diklik ke hasil NLP
-  // agar summary di modal sesuai dengan hari yang dipilih user.
-  // (Kondisi saat ini dari API mungkin berbeda dengan prakiraan hari X)
-  // Untuk hari ini (index 0) data NLP sudah sesuai; untuk hari lain
-  // kita tetap tampilkan NLP hari ini + info prakiraan dari card.
-  return data;
+  const data: NlpPipelineResponse = await res.json()
+  if (!data.success) throw new Error(data.error || "NLP gagal diproses.")
+  return data
 }
 
 // ─── Sidebar ────────────────────────────────────────────────────────────
@@ -497,625 +462,419 @@ async function fetchNlpAnalysis(
 // ─── Carousel ───────────────────────────────────────────────────────────
 
 function Carousel({ children }: { children: React.ReactNode }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(true);
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [canPrev, setCanPrev] = useState(false)
+  const [canNext, setCanNext] = useState(true)
 
   const update = useCallback(() => {
-    const t = trackRef.current;
-    if (!t) return;
-    const max = t.scrollWidth - t.clientWidth;
-    setCanPrev(t.scrollLeft > 5);
-    setCanNext(t.scrollLeft + t.clientWidth < max - 5);
-  }, []);
+    const t = trackRef.current
+    if (!t) return
+    const max = t.scrollWidth - t.clientWidth
+    setCanPrev(t.scrollLeft > 5)
+    setCanNext(t.scrollLeft + t.clientWidth < max - 5)
+  }, [])
 
   useEffect(() => {
-    const t = trackRef.current;
-    if (!t) return;
-    t.addEventListener("scroll", update);
-    window.addEventListener("resize", update);
-    setTimeout(update, 50);
-    return () => {
-      t.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [update]);
+    const t = trackRef.current
+    if (!t) return
+    t.addEventListener("scroll", update)
+    window.addEventListener("resize", update)
+    setTimeout(update, 50)
+    return () => { t.removeEventListener("scroll", update); window.removeEventListener("resize", update) }
+  }, [update])
 
   const scroll = (dir: "left" | "right") => {
-    const t = trackRef.current;
-    if (!t) return;
-    t.scrollBy({
-      left: dir === "left" ? -(t.clientWidth * 0.85) : t.clientWidth * 0.85,
-      behavior: "smooth",
-    });
-    setTimeout(update, 200);
-  };
+    const t = trackRef.current
+    if (!t) return
+    t.scrollBy({ left: dir === "left" ? -(t.clientWidth * 0.85) : t.clientWidth * 0.85, behavior: "smooth" })
+    setTimeout(update, 200)
+  }
 
   return (
     <div className="relative">
-      <button
-        onClick={() => scroll("left")}
-        disabled={!canPrev}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full shadow-sm flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all"
-      >
+      <button onClick={() => scroll("left")} disabled={!canPrev}
+        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full shadow-sm flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all">
         <ChevronLeft className="h-4 w-4 text-slate-600" />
       </button>
-      <div
-        ref={trackRef}
+      <div ref={trackRef}
         className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory gap-5 px-10 py-3"
-        style={
-          {
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          } as React.CSSProperties
-        }
-      >
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}>
         {children}
       </div>
-      <button
-        onClick={() => scroll("right")}
-        disabled={!canNext}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full shadow-sm flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all"
-      >
+      <button onClick={() => scroll("right")} disabled={!canNext}
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white border border-slate-200 rounded-full shadow-sm flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all">
         <ChevronRight className="h-4 w-4 text-slate-600" />
       </button>
     </div>
-  );
+  )
 }
 
 // ─── Wind Card ───────────────────────────────────────────────────────────
 
-function WindCard({
-  date,
-  speed,
-  dir,
-  index,
-}: {
-  date: string;
-  speed: number;
-  dir: number;
-  index: number;
-}) {
-  const shortDate = new Date(date).toLocaleDateString("id-ID", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  const gustEst = (speed + 2.0).toFixed(1);
+function WindCard({ date, speed, dir, index }: { date: string; speed: number; dir: number; index: number }) {
+  const shortDate = new Date(date).toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" })
+  const gustEst   = Math.round(speed + 7)
   return (
     <div className="snap-start min-w-70 md:min-w-75 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col shrink-0 hover:-translate-y-1 transition-all duration-200">
       <div className="flex justify-between items-start mb-2">
-        <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">
-          {shortDate}
-        </span>
-        <span className="text-xs font-bold text-[#00a991] bg-[#e6f6f4] px-2 py-0.5 rounded-full">
-          {getDayLabel(index)}
-        </span>
+        <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">{shortDate}</span>
+        <span className="text-xs font-bold text-[#00a991] bg-[#e6f6f4] px-2 py-0.5 rounded-full">{getDayLabel(index)}</span>
       </div>
       <div className="flex items-center gap-4 mt-1 mb-3">
-        <div
-          className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-2xl"
-          style={{ transform: `rotate(${dir}deg)`, display: "inline-flex" }}
-        >
-          🧭
+        <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center"
+          style={{ transform: `rotate(${dir}deg)` }}>
+          <Navigation className="h-6 w-6 text-[#00a991]" />
         </div>
         <div>
           <p className="text-xs text-slate-500">Kecepatan maks</p>
-          <h3 className="text-2xl font-bold text-slate-800">
-            {speed}
-            <span className="text-sm font-normal text-slate-500"> m/s</span>
-          </h3>
+          <h3 className="text-2xl font-bold text-slate-800">{speed}<span className="text-sm font-normal text-slate-500"> km/jam</span></h3>
         </div>
       </div>
       <div className="flex justify-between text-xs text-slate-600">
-        <span className="flex items-center gap-1">
-          <Compass className="h-3 w-3 text-[#00a991]" /> Arah:{" "}
-          {degToCardinal(dir)}
-        </span>
-        <span className="text-slate-400">💨 hembusan: {gustEst} m/s</span>
+        <span className="flex items-center gap-1"><Compass className="h-3 w-3 text-[#00a991]" /> Arah: {degToCardinal(dir)}</span>
+        <span className="text-slate-400">💨 hembusan: {gustEst} km/jam</span>
       </div>
     </div>
-  );
+  )
 }
 
 // ─── Weather Card ────────────────────────────────────────────────────────
 
-function WeatherCard({
-  date,
-  tempMax,
-  tempMin,
-  weatherCode,
-  weatherPrimary,
-  windSpeed,
-  index,
-  onDetail,
-}: {
-  date: string;
-  tempMax: number;
-  tempMin: number;
-  weatherCode: number;
-  weatherPrimary: string;
-  windSpeed: number;
-  index: number;
-  onDetail: (d: ModalData) => void;
+function WeatherCard({ date, tempMax, tempMin, weatherCode, weatherPrimary, windSpeed, index, onDetail }: {
+  date: string; tempMax: number; tempMin: number; weatherCode: number
+  weatherPrimary: string; windSpeed: number; index: number; onDetail: (d: ModalData) => void
 }) {
-  const shortDate = new Date(date).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-  });
-  const weatherText = weatherPrimary || getWeatherLabel(weatherCode);
-  const energy = energyPotential(windSpeed);
-  const windKmh = Math.round(windSpeed * 3.6);
+  const shortDate   = new Date(date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })
+  const weatherText = weatherPrimary || getWeatherLabel(weatherCode)
+  const energy      = energyPotential(windSpeed)
+  const windKmh     = windSpeed
 
   return (
     <div className="snap-start min-w-70 md:min-w-77.5 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col shrink-0 hover:-translate-y-1 transition-all duration-200">
       <div className="flex justify-between items-center border-b border-slate-100 pb-2 mb-3">
-        <span className="text-sm font-bold text-slate-700">
-          {shortDate} · {getDayLabel(index)}
-        </span>
-        <span className="text-sm font-medium text-[#00a991] bg-[#e6f6f4] px-2 py-1 rounded-lg">
-          {weatherText}
-        </span>
+        <span className="text-sm font-bold text-slate-700">{shortDate} · {getDayLabel(index)}</span>
+        <span className="text-sm font-medium text-[#00a991] bg-[#e6f6f4] px-2 py-1 rounded-lg">{weatherText}</span>
       </div>
       <div className="flex items-center justify-between mt-1">
         <div>
           <p className="text-xs text-slate-500">Suhu (min - maks)</p>
-          <p className="text-2xl font-extrabold text-slate-800">
-            {tempMin}°<span className="text-slate-400">/</span>
-            {tempMax}°C
-          </p>
+          <p className="text-2xl font-extrabold text-slate-800">{tempMin}°<span className="text-slate-400">/</span>{tempMax}°C</p>
         </div>
         <div className="text-right">
           <p className="text-xs text-slate-500">Kecepatan angin</p>
-          <p className="text-xl font-bold text-[#00a991]">{windSpeed} m/s</p>
+          <p className="text-xl font-bold text-[#00a991]">{windSpeed} km/jam</p>
         </div>
       </div>
       <button
-        onClick={() =>
-          onDetail({
-            date: shortDate,
-            dateISO: date,
-            windSpeed,
-            windKmh,
-            weatherCond: weatherText,
-            temp: tempMax,
-            energy,
-          })
-        }
-        className="mt-5 w-full bg-[#00a991] hover:bg-[#008774] text-white text-sm font-medium py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2"
-      >
+        onClick={() => onDetail({ date: shortDate, dateISO: date, windSpeed, windKmh, weatherCond: weatherText, temp: tempMax, energy })}
+        className="mt-5 w-full bg-[#00a991] hover:bg-[#008774] text-white text-sm font-medium py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
         <Newspaper className="h-4 w-4" /> Detail & Analisis
       </button>
     </div>
-  );
+  )
 }
 
 // ─── Trends Charts ───────────────────────────────────────────────────────
 
-function TrendsView({
-  hourlyData,
-  filter,
-  onFilterChange,
-}: {
-  hourlyData: HourlyData | null;
-  filter: TrendFilter;
-  onFilterChange: (f: TrendFilter) => void;
+function TrendsView({ hourlyData, filter, onFilterChange }: {
+  hourlyData: HourlyData | null; filter: TrendFilter; onFilterChange: (f: TrendFilter) => void
 }) {
-  const tempRef = useRef<HTMLCanvasElement>(null);
-  const humidityRef = useRef<HTMLCanvasElement>(null);
-  const windRef = useRef<HTMLCanvasElement>(null);
+  const tempRef       = useRef<HTMLCanvasElement>(null)
+  const humidityRef   = useRef<HTMLCanvasElement>(null)
+  const windRef       = useRef<HTMLCanvasElement>(null)
+  const windDirRef    = useRef<HTMLCanvasElement>(null)
+
+  // ─── Helper: derajat → label kardinal + unicode arrow ───────────────
+  function degToArrowLabel(deg: number): string {
+    const d = ((deg % 360) + 360) % 360
+    if (d < 22.5  || d >= 337.5) return `↑ Utara`
+    if (d < 67.5)                return `↗ Timur Laut`
+    if (d < 112.5)               return `→ Timur`
+    if (d < 157.5)               return `↘ Tenggara`
+    if (d < 202.5)               return `↓ Selatan`
+    if (d < 247.5)               return `↙ Barat Daya`
+    if (d < 292.5)               return `← Barat`
+    return                              `↖ Barat Laut`
+  }
 
   useEffect(() => {
-    if (!hourlyData) return;
+    if (!hourlyData) return
     const render = async () => {
-      const { default: ChartJS } = await import("chart.js/auto");
-      [tempRef, humidityRef, windRef].forEach((r) => {
-        if (r.current) ChartJS.getChart(r.current)?.destroy();
-      });
-      let labels: string[],
-        temps: number[],
-        humidity: number[],
-        winds: number[];
-      if (filter === "hourly") {
-        labels = hourlyData.time
-          .slice(0, 24)
-          .map((t) => `${new Date(t).getHours()}:00`);
-        temps = hourlyData.temperature_2m.slice(0, 24);
-        humidity = hourlyData.relativehumidity_2m.slice(0, 24);
-        winds = hourlyData.wind_speed_10m.slice(0, 24);
-      } else {
-        const map = new Map<
-          string,
-          { t: number[]; h: number[]; w: number[] }
-        >();
-        hourlyData.time.forEach((ts, i) => {
-          const key = ts.split("T")[0];
-          if (!map.has(key)) map.set(key, { t: [], h: [], w: [] });
-          const d = map.get(key)!;
-          d.t.push(hourlyData.temperature_2m[i]);
-          d.h.push(hourlyData.relativehumidity_2m[i]);
-          d.w.push(hourlyData.wind_speed_10m[i]);
-        });
-        labels = [];
-        temps = [];
-        humidity = [];
-        winds = [];
-        map.forEach((v, k) => {
-          labels.push(k.slice(5));
-          temps.push(Math.max(...v.t));
-          humidity.push(
-            parseFloat(
-              (v.h.reduce((a, b) => a + b, 0) / v.h.length).toFixed(1),
-            ),
-          );
-          winds.push(
-            parseFloat(
-              (v.w.reduce((a, b) => a + b, 0) / v.w.length).toFixed(1),
-            ),
-          );
-        });
-      }
-      const baseOpts = {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: { legend: { display: false } },
-      };
-      if (tempRef.current)
-        new ChartJS(tempRef.current, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Suhu (°C)",
-                data: temps,
-                borderColor: "#00a991",
-                backgroundColor: "rgba(0,169,145,0.05)",
-                tension: 0.3,
-                fill: true,
-                pointRadius: 3,
-              },
-            ],
-          },
-          options: baseOpts,
-        });
-      if (humidityRef.current)
-        new ChartJS(humidityRef.current, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Kelembapan (%)",
-                data: humidity,
-                borderColor: "#3b82f6",
-                backgroundColor: "rgba(59,130,246,0.05)",
-                tension: 0.3,
-                pointRadius: 3,
-              },
-            ],
-          },
-          options: baseOpts,
-        });
-      if (windRef.current)
-        new ChartJS(windRef.current, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Angin (m/s)",
-                data: winds,
-                borderColor: "#f97316",
-                backgroundColor: "rgba(249,115,22,0.05)",
-                tension: 0.3,
-                pointRadius: 3,
-              },
-            ],
-          },
-          options: baseOpts,
-        });
-    };
-    render();
-  }, [hourlyData, filter]);
+      const { default: ChartJS } = await import("chart.js/auto")
+      ;[tempRef, humidityRef, windRef, windDirRef].forEach((r) => { if (r.current) ChartJS.getChart(r.current)?.destroy() })
 
-  const ChartCard = ({
-    icon,
-    title,
-    canvasRef,
-  }: {
-    icon: React.ReactNode;
-    title: string;
-    canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  }) => (
+      let labels: string[], temps: number[], humidity: number[], winds: number[], windDir: number[]
+
+      const median = (arr: number[]): number => {
+        const sorted = [...arr].sort((a, b) => a - b)
+        const mid = Math.floor(sorted.length / 2)
+        return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+      }
+
+      if (filter === "hourly") {
+        labels   = hourlyData.time.slice(0, 24).map(t => `${new Date(t).getHours()}:00`)
+        temps    = hourlyData.temperature_2m.slice(0, 24)
+        humidity = hourlyData.relativehumidity_2m.slice(0, 24)
+        winds    = hourlyData.wind_speed_10m.slice(0, 24)
+        windDir  = (hourlyData.wind_direction_10m ?? []).slice(0, 24)
+      } else {
+        const map = new Map<string, { t: number[]; h: number[]; w: number[]; d: number[] }>()
+        hourlyData.time.forEach((ts, i) => {
+          const key = ts.split("T")[0]
+          if (!map.has(key)) map.set(key, { t: [], h: [], w: [], d: [] })
+          const d = map.get(key)!
+          d.t.push(hourlyData.temperature_2m[i])
+          d.h.push(hourlyData.relativehumidity_2m[i])
+          d.w.push(hourlyData.wind_speed_10m[i])
+          d.d.push((hourlyData.wind_direction_10m ?? [])[i] ?? 0)
+        })
+        labels = []; temps = []; humidity = []; winds = []; windDir = []
+        map.forEach((v, k) => {
+          labels.push(k.slice(5))
+          temps.push(Math.max(...v.t))
+          humidity.push(parseFloat((v.h.reduce((a, b) => a + b, 0) / v.h.length).toFixed(1)))
+          winds.push(parseFloat((v.w.reduce((a, b) => a + b, 0) / v.w.length).toFixed(1)))
+          windDir.push(parseFloat(median(v.d).toFixed(1)))
+        })
+      }
+
+      const baseOpts = { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+
+      if (tempRef.current)
+        new ChartJS(tempRef.current, { type: "line", data: { labels, datasets: [{ label: "Suhu (°C)", data: temps, borderColor: "#00a991", backgroundColor: "rgba(0,169,145,0.05)", tension: 0.3, fill: true, pointRadius: 3 }] }, options: baseOpts })
+
+      if (humidityRef.current)
+        new ChartJS(humidityRef.current, { type: "line", data: { labels, datasets: [{ label: "Kelembapan (%)", data: humidity, borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,0.05)", tension: 0.3, pointRadius: 3 }] }, options: baseOpts })
+
+      if (windRef.current)
+        new ChartJS(windRef.current, { type: "line", data: { labels, datasets: [{ label: "Angin (m/s)", data: winds, borderColor: "#f97316", backgroundColor: "rgba(249,115,22,0.05)", tension: 0.3, pointRadius: 3 }] }, options: baseOpts })
+
+      // ─── Wind Direction Chart (UPDATED) ────────────────────────────
+      // • Sumbu Y tampil dengan label 0°–360°
+      // • Arrow dihapus dari canvas — hanya muncul di tooltip hover
+      // • Tooltip format: "↓ Selatan  (180°)"
+      if (windDirRef.current)
+        new ChartJS(windDirRef.current, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label:           "Arah Angin (°)",
+              data:            windDir,
+              borderColor:     "#10b981",
+              backgroundColor: "rgba(16,185,129,0.08)",
+              tension:         0.3,
+              fill:            true,
+              pointRadius:     0,
+              pointHitRadius:  12,
+              borderWidth:     2.5,
+            }],
+          },
+          options: {
+            responsive:          true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: (items) => items[0]?.label ?? "",
+                  label: (item) => {
+                    const deg    = item.raw as number
+                    const arrow  = degToArrowLabel(deg)
+                    return `  ${arrow}  (${Math.round(deg)}°)`
+                  },
+                },
+                displayColors:   false,
+                backgroundColor: "rgba(15,23,42,0.85)",
+                titleColor:      "#94a3b8",
+                bodyColor:       "#f1f5f9",
+                bodyFont:        { size: 13, weight: "bold" as const },
+                padding:         10,
+                cornerRadius:    8,
+              },
+            },
+            scales: {
+              x: { display: true },
+              y: {
+                display: true,
+                min:     0,
+                max:     360,
+                ticks: {
+                  stepSize: 90,
+                  color:    "#94a3b8",
+                  font:     { size: 11 },
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  callback: (value: any) => `${value}°`,
+                },
+                grid: {
+                  color: "rgba(148,163,184,0.15)",
+                },
+              },
+            },
+          },
+        })
+    }
+    render()
+  }, [hourlyData, filter])
+
+  const ChartCard = ({ icon, title, canvasRef }: { icon: React.ReactNode; title: string; canvasRef: React.RefObject<HTMLCanvasElement | null> }) => (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-      <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-3">
-        {icon}
-        <h3 className="font-semibold text-slate-800 text-sm">{title}</h3>
-      </div>
+      <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-3">{icon}<h3 className="font-semibold text-slate-800 text-sm">{title}</h3></div>
       <canvas ref={canvasRef} style={{ maxHeight: 260 }} />
     </div>
-  );
+  )
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-4 mt-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
         <div className="flex gap-3">
-          <button
-            onClick={() => onFilterChange("hourly")}
-            className={`px-5 py-2 rounded-xl font-medium text-sm transition-all flex items-center gap-1.5 ${filter === "hourly" ? "bg-[#00a991] text-white" : "bg-[#00a991]/10 text-[#008774] hover:bg-[#00a991] hover:text-white"}`}
-          >
+          <button onClick={() => onFilterChange("hourly")}
+            className={`px-5 py-2 rounded-xl font-medium text-sm transition-all flex items-center gap-1.5 ${filter === "hourly" ? "bg-[#00a991] text-white" : "bg-[#00a991]/10 text-[#008774] hover:bg-[#00a991] hover:text-white"}`}>
             <Clock className="h-4 w-4" /> Per Hari (Jam)
           </button>
-          <button
-            onClick={() => onFilterChange("dailyAgg")}
-            className={`px-5 py-2 rounded-xl font-medium text-sm transition-all flex items-center gap-1.5 ${filter === "dailyAgg" ? "bg-[#00a991] text-white" : "bg-slate-100 text-slate-700 hover:bg-[#00a991] hover:text-white"}`}
-          >
+          <button onClick={() => onFilterChange("dailyAgg")}
+            className={`px-5 py-2 rounded-xl font-medium text-sm transition-all flex items-center gap-1.5 ${filter === "dailyAgg" ? "bg-[#00a991] text-white" : "bg-slate-100 text-slate-700 hover:bg-[#00a991] hover:text-white"}`}>
             <TrendingUp className="h-4 w-4" /> Per Minggu (Harian)
           </button>
         </div>
-        <span className="text-xs text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
-          Tren prediksi 7 hari ke depan
-        </span>
+        <span className="text-xs text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">Tren prediksi 7 hari ke depan</span>
       </div>
-      {!hourlyData ? (
-        <div className="flex justify-center py-16">
-          <div className="w-10 h-10 border-4 border-teal-100 border-t-[#00a991] rounded-full animate-spin" />
-        </div>
-      ) : (
-        <>
-          <ChartCard
-            icon={<Thermometer className="h-5 w-5 text-[#00a991]" />}
-            title={
-              filter === "hourly"
-                ? "Tren Suhu Maks / Per Jam (°C)"
-                : "Suhu Maks Harian (°C)"
-            }
-            canvasRef={tempRef}
-          />
-          <ChartCard
-            icon={<Droplets className="h-5 w-5 text-[#00a991]" />}
-            title="Kelembapan Udara (%)"
-            canvasRef={humidityRef}
-          />
-          <ChartCard
-            icon={<Wind className="h-5 w-5 text-[#00a991]" />}
-            title="Kecepatan Angin (m/s)"
-            canvasRef={windRef}
-          />
-          <p className="text-center text-xs text-slate-400 italic">
-            *Data berdasarkan model open-meteo, diperbaharui sesuai lokasi peta
-          </p>
-        </>
-      )}
+      {!hourlyData
+        ? <div className="flex justify-center py-16"><div className="w-10 h-10 border-4 border-teal-100 border-t-[#00a991] rounded-full animate-spin" /></div>
+        : <>
+            <ChartCard icon={<Thermometer className="h-5 w-5 text-[#00a991]" />} title={filter === "hourly" ? "Tren Suhu Maks / Per Jam (°C)" : "Suhu Maks Harian (°C)"} canvasRef={tempRef} />
+            <ChartCard icon={<Droplets className="h-5 w-5 text-[#00a991]" />} title="Kelembapan Udara (%)" canvasRef={humidityRef} />
+            <ChartCard icon={<Wind className="h-5 w-5 text-[#00a991]" />} title="Kecepatan Angin (km/jam)" canvasRef={windRef} />
+            <ChartCard icon={<Compass className="h-5 w-5 text-[#8b5cf6]" />} title={filter === "hourly" ? "Arah Angin Per Jam" : "Arah Angin Harian"} canvasRef={windDirRef} />
+            <p className="text-center text-xs text-slate-400 italic">*Data berdasarkan model open-meteo, diperbaharui sesuai lokasi peta</p>
+          </>}
     </div>
-  );
+  )
 }
+
 
 // ─── NEW: NLP Sentiment Badge ─────────────────────────────────────────────
 // Komponen kecil untuk menampilkan badge sentimen dengan warna sesuai kondisi.
 
-function SentimentBadge({
-  label,
-  score,
-}: {
-  label: NlpSentiment["label"];
-  score: number;
-}) {
+function SentimentBadge({ label, score }: { label: NlpSentiment["label"]; score: number }) {
   const config = {
-    baik: {
-      icon: CheckCircle,
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
-      text: "text-emerald-700",
-      label: "Baik",
-    },
-    cukup: {
-      icon: AlertCircle,
-      bg: "bg-blue-50",
-      border: "border-blue-200",
-      text: "text-blue-700",
-      label: "Cukup",
-    },
-    waspada: {
-      icon: ShieldAlert,
-      bg: "bg-amber-50",
-      border: "border-amber-200",
-      text: "text-amber-700",
-      label: "Waspada",
-    },
-    berbahaya: {
-      icon: ShieldX,
-      bg: "bg-red-50",
-      border: "border-red-200",
-      text: "text-red-700",
-      label: "Berbahaya",
-    },
-  };
-  const c = config[label];
-  const Icon = c.icon;
+    baik:      { icon: CheckCircle,  bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", label: "Baik" },
+    cukup:     { icon: AlertCircle,  bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700",    label: "Cukup" },
+    waspada:   { icon: ShieldAlert,  bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700",   label: "Waspada" },
+    berbahaya: { icon: ShieldX,      bg: "bg-red-50",     border: "border-red-200",     text: "text-red-700",     label: "Berbahaya" },
+  }
+  const c    = config[label]
+  const Icon = c.icon
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${c.bg} ${c.border} ${c.text}`}
-    >
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${c.bg} ${c.border} ${c.text}`}>
       <Icon className="h-3.5 w-3.5" />
       {c.label} · {score}/100
     </span>
-  );
+  )
 }
-
 // ─── NEW: NLP Breakdown Bar ────────────────────────────────────────────────
 
 function BreakdownBar({ breakdown }: { breakdown: NlpSentimentBreakdown }) {
   const bars = [
-    {
-      key: "positif",
-      label: "Positif",
-      color: "bg-emerald-400",
-      value: breakdown.positif,
-    },
-    {
-      key: "netral",
-      label: "Netral",
-      color: "bg-blue-400",
-      value: breakdown.netral,
-    },
-    {
-      key: "waspada",
-      label: "Waspada",
-      color: "bg-amber-400",
-      value: breakdown.waspada,
-    },
-    {
-      key: "berbahaya",
-      label: "Berbahaya",
-      color: "bg-red-400",
-      value: breakdown.berbahaya,
-    },
-  ].filter((b) => b.value > 0);
+    { key: "positif",   label: "Positif",   color: "bg-emerald-400", value: breakdown.positif },
+    { key: "netral",    label: "Netral",     color: "bg-blue-400",    value: breakdown.netral },
+    { key: "waspada",   label: "Waspada",    color: "bg-amber-400",   value: breakdown.waspada },
+    { key: "berbahaya", label: "Berbahaya",  color: "bg-red-400",     value: breakdown.berbahaya },
+  ].filter(b => b.value > 0)
 
   return (
     <div className="space-y-1.5 mt-3">
-      <p className="text-xs font-medium text-slate-500 mb-2">
-        Distribusi Sentimen Parameter
-      </p>
-      {bars.map((b) => (
+      <p className="text-xs font-medium text-slate-500 mb-2">Distribusi Sentimen Parameter</p>
+      {bars.map(b => (
         <div key={b.key} className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 w-16 shrink-0">
-            {b.label}
-          </span>
+          <span className="text-xs text-slate-500 w-16 shrink-0">{b.label}</span>
           <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-            <div
-              className={`h-full rounded-full ${b.color} transition-all duration-500`}
-              style={{ width: `${b.value}%` }}
-            />
+            <div className={`h-full rounded-full ${b.color} transition-all duration-500`} style={{ width: `${b.value}%` }} />
           </div>
-          <span className="text-xs font-medium text-slate-600 w-8 text-right">
-            {b.value}%
-          </span>
+          <span className="text-xs font-medium text-slate-600 w-8 text-right">{b.value}%</span>
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 // ─── Detail Modal (UPDATED) ──────────────────────────────────────────────
 // Hanya bagian fetch dan render konten NLP yang berubah.
 // Struktur modal, header, layout, tombol kembali — semua sama persis.
 
-function DetailModal({
-  data,
-  news,
-  locationName,
-  lat,
-  lng,
-  onClose,
-}: {
-  data: ModalData | null;
-  news: NewsItem[];
-  locationName: string;
-  lat: number | null; // NEW: dibutuhkan untuk fetch NLP
-  lng: number | null; // NEW: dibutuhkan untuk fetch NLP
-  onClose: () => void;
+function DetailModal({ data, news, locationName, lat, lng, onClose }: {
+  data:         ModalData | null
+  news:         NewsItem[]
+  locationName: string
+  lat:          number | null
+  lng:          number | null
+  onClose:      () => void
 }) {
-  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-  const [nlpResult, setNlpResult] = useState<NlpPipelineResponse | null>(null);
-  const [nlpLoading, setNlpLoading] = useState(false);
-  const [nlpError, setNlpError] = useState<string | null>(null);
+  const [selectedNews,  setSelectedNews]  = useState<NewsItem | null>(null)
+  const [nlpResult,     setNlpResult]     = useState<NlpPipelineResponse | null>(null)
+  const [nlpLoading,    setNlpLoading]    = useState(false)
+  const [nlpError,      setNlpError]      = useState<string | null>(null)
 
-  // Fetch NLP setiap kali modal dibuka (data berubah)
   useEffect(() => {
-    if (!data || lat === null || lng === null) return;
-    setSelectedNews(null);
-    setNlpResult(null);
-    setNlpError(null);
-    setNlpLoading(true);
+    if (!data || lat === null || lng === null) return
+    setSelectedNews(null)
+    setNlpResult(null)
+    setNlpError(null)
+    setNlpLoading(true)
 
     fetchNlpAnalysis(lat, lng, data)
       .then(setNlpResult)
-      .catch((e) =>
-        setNlpError(
-          e instanceof Error ? e.message : "Gagal memuat analisis NLP.",
-        ),
-      )
-      .finally(() => setNlpLoading(false));
-  }, [data, lat, lng]);
+      .catch((e) => setNlpError(e instanceof Error ? e.message : "Gagal memuat analisis NLP."))
+      .finally(() => setNlpLoading(false))
+  }, [data, lat, lng])
 
-  if (!data) return null;
+  if (!data) return null
 
-  const nlp = nlpResult?.pipeline.step4_nlp;
+  const nlp = nlpResult?.pipeline.step4_nlp
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header — tidak berubah */}
+
         <div className="flex justify-between items-center p-5 bg-linear-to-r from-[#00a991] to-[#007f6d] text-white">
           <h2 className="font-semibold text-lg flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            {selectedNews
-              ? selectedNews.title.substring(0, 48) + "…"
-              : "Insight Energi & Liputan Ventara"}
+            {selectedNews ? selectedNews.title.substring(0, 48) + "…" : "Insight Energi & Liputan Ventara"}
           </h2>
-          <button
-            onClick={onClose}
-            className="hover:bg-white/20 rounded-full p-1.5 transition"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <button onClick={onClose} className="hover:bg-white/20 rounded-full p-1.5 transition"><X className="h-5 w-5" /></button>
         </div>
 
-        {/* Body */}
         <div className="p-6 max-h-[70vh] overflow-y-auto">
           {!selectedNews ? (
             <>
-              {/* Info card hari — tidak berubah */}
               <div className="bg-[#e6f6f4] rounded-xl p-4 mb-5 border border-[#b8e4dd]">
                 <div className="flex flex-wrap justify-between gap-2 text-sm text-slate-600 mb-3">
-                  <span>
-                    📅 <strong>{data.date}</strong>
-                  </span>
+                  <span>📅 <strong>{data.date}</strong></span>
                   <span>🌡 {data.temp}°C</span>
                   <span>⚡ Potensi {data.energy}%</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white p-3 rounded-xl text-center shadow-sm">
-                    <span className="block text-2xl font-bold text-slate-800">
-                      {data.windSpeed} m/s
-                    </span>
-                    <span className="block text-xs text-slate-400">
-                      ≈ {data.windKmh} km/jam
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      Kecepatan angin max
-                    </span>
+                    <span className="block text-2xl font-bold text-slate-800">{data.windSpeed} km/jam</span>
+                    <span className="block text-xs text-slate-400">max</span>
+                    <span className="text-xs text-slate-500">Kecepatan angin max</span>
                   </div>
                   <div className="bg-white p-3 rounded-xl text-center shadow-sm">
-                    <span className="block text-2xl font-bold text-[#00a991]">
-                      {data.energy}%
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      Estimasi output listrik
-                    </span>
+                    <span className="block text-2xl font-bold text-[#00a991]">{data.energy}%</span>
+                    <span className="text-xs text-slate-500">Estimasi output listrik</span>
                   </div>
                 </div>
-                <p className="text-sm text-slate-600 mt-3">
-                  🌤 Kondisi: {data.weatherCond} · Kombinasi suhu & angin
-                  mendukung produksi bersih.
-                </p>
+                <p className="text-sm text-slate-600 mt-3">🌤 Kondisi: {data.weatherCond} · Kombinasi suhu & angin mendukung produksi bersih.</p>
               </div>
 
-              {/* ── BAGIAN NLP (menggantikan xweather phrase) ── */}
               <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                <Zap className="h-4 w-4 text-[#00a991]" /> Analisis NLP Kondisi
-                Cuaca
+                <Zap className="h-4 w-4 text-[#00a991]" /> Analisis Cuaca & Rekomendasi
               </h3>
 
               {nlpLoading && (
                 <div className="border border-[#00a991]/30 rounded-xl p-4 mb-4 bg-[#e6f6f4] flex items-center gap-3">
                   <Loader2 className="h-4 w-4 text-[#00a991] animate-spin shrink-0" />
-                  <span className="text-sm text-slate-500">
-                    Memproses pipeline NLP...
-                  </span>
+                  <span className="text-sm text-slate-500">Memproses pipeline NLP...</span>
                 </div>
               )}
 
@@ -1127,404 +886,337 @@ function DetailModal({
               )}
 
               {nlp && !nlpLoading && (
-                <div className="space-y-3 mb-5">
-                  {/* Summarization */}
-                  <div className="border border-[#00a991]/30 rounded-xl p-4 bg-[#e6f6f4] shadow-sm">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <p className="font-semibold text-slate-800 text-sm">
-                        📝 Ringkasan Kondisi
-                      </p>
-                      <SentimentBadge
-                        label={nlp.sentiment.label}
-                        score={nlp.sentiment.score}
-                      />
-                    </div>
-                    {/* Render summary — bold marker (**text**) dikonversi ke <strong> */}
-                    <p className="text-slate-700 text-sm leading-relaxed">
-                      {nlp.summary
-                        .split(/\*\*(.*?)\*\*/g)
-                        .map((part, i) =>
-                          i % 2 === 1 ? <strong key={i}>{part}</strong> : part,
-                        )}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-2">
-                      Tone: {nlp.sentiment.tone}
-                    </p>
-                    <BreakdownBar breakdown={nlp.sentiment.breakdown} />
+                <div className="border border-[#00a991]/30 rounded-xl overflow-hidden mb-5 shadow-sm">
+
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-[#e6f6f4] border-b border-[#00a991]/20">
+                    <SentimentBadge label={nlp.sentiment.label} score={nlp.sentiment.score} />
+                    <span className="text-xs text-slate-400 truncate max-w-[55%] text-right leading-snug">
+                      {nlp.sentiment.tone}
+                    </span>
                   </div>
 
-                  {/* Highlights: warnings */}
-                  {nlp.highlights.warnings.length > 0 && (
-                    <div className="border border-amber-200 rounded-xl p-4 bg-amber-50">
-                      <p className="font-semibold text-amber-800 text-sm mb-2 flex items-center gap-1.5">
-                        <ShieldAlert className="h-4 w-4" /> Perlu Diperhatikan
-                      </p>
-                      <ul className="space-y-1">
-                        {nlp.highlights.warnings.map((w, i) => (
-                          <li
-                            key={i}
-                            className="text-sm text-amber-700 flex items-center gap-2"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                            {w}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  <div className="bg-white px-4 py-3 space-y-3">
 
-                  {/* Highlights: positives */}
-                  {nlp.highlights.positives.length > 0 && (
-                    <div className="border border-emerald-200 rounded-xl p-4 bg-emerald-50">
-                      <p className="font-semibold text-emerald-800 text-sm mb-2 flex items-center gap-1.5">
-                        <CheckCircle className="h-4 w-4" /> Kondisi Mendukung
-                      </p>
-                      <ul className="space-y-1">
-                        {nlp.highlights.positives.map((p, i) => (
-                          <li
-                            key={i}
-                            className="text-sm text-emerald-700 flex items-center gap-2"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                            {p}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      {nlp.summary.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+                        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                      )}
+                    </p>
 
-                  {/* Advice list */}
-                  {nlp.advice.length > 0 && (
-                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
-                      <p className="font-semibold text-slate-700 text-sm mb-2">
-                        💡 Rekomendasi
-                      </p>
-                      <ul className="space-y-1.5">
-                        {nlp.advice.map((a, i) => (
-                          <li
-                            key={i}
-                            className="text-sm text-slate-600 flex items-start gap-2"
-                          >
-                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#00a991] shrink-0" />
-                            {a}
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="flex h-1.5 rounded-full overflow-hidden gap-0.5">
+                      {nlp.sentiment.breakdown.positif   > 0 && (
+                        <div className="bg-emerald-400 rounded-full" style={{ width: `${nlp.sentiment.breakdown.positif}%` }} />
+                      )}
+                      {nlp.sentiment.breakdown.netral    > 0 && (
+                        <div className="bg-blue-400 rounded-full"    style={{ width: `${nlp.sentiment.breakdown.netral}%` }} />
+                      )}
+                      {nlp.sentiment.breakdown.waspada   > 0 && (
+                        <div className="bg-amber-400 rounded-full"   style={{ width: `${nlp.sentiment.breakdown.waspada}%` }} />
+                      )}
+                      {nlp.sentiment.breakdown.berbahaya > 0 && (
+                        <div className="bg-red-400 rounded-full"     style={{ width: `${nlp.sentiment.breakdown.berbahaya}%` }} />
+                      )}
                     </div>
-                  )}
+                    <div className="flex flex-wrap gap-3">
+                      {nlp.sentiment.breakdown.positif   > 0 && (
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                          Positif {nlp.sentiment.breakdown.positif}%
+                        </span>
+                      )}
+                      {nlp.sentiment.breakdown.netral    > 0 && (
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
+                          Netral {nlp.sentiment.breakdown.netral}%
+                        </span>
+                      )}
+                      {nlp.sentiment.breakdown.waspada   > 0 && (
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                          Waspada {nlp.sentiment.breakdown.waspada}%
+                        </span>
+                      )}
+                      {nlp.sentiment.breakdown.berbahaya > 0 && (
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+                          Berbahaya {nlp.sentiment.breakdown.berbahaya}%
+                        </span>
+                      )}
+                    </div>
 
-                  {/* Pipeline trace (collapsible, untuk keperluan presentasi/dosen) */}
-                  <details className="border border-slate-200 rounded-xl overflow-hidden">
-                    <summary className="px-4 py-3 text-xs font-medium text-slate-500 cursor-pointer hover:bg-slate-50 select-none">
-                      🔬 Lihat pipeline NLP (tokens &amp; konsep)
-                    </summary>
-                    <div className="px-4 pb-4 pt-2 space-y-3">
-                      {/* Tokens */}
-                      <div>
-                        <p className="text-xs font-semibold text-slate-600 mb-1.5">
-                          Step 2 · Tokenizing
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {nlpResult?.pipeline.step2_tokens.map((t, i) => (
-                            <span
-                              key={i}
-                              className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
+                    <div className="border-t border-slate-100" />
+
+                    <div className="grid grid-cols-2 gap-3">
+
+                      <div className="space-y-2.5">
+                        {nlp.highlights.warnings.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-amber-700 mb-1.5 flex items-center gap-1">
+                              <ShieldAlert className="h-3 w-3" /> Perlu diwaspadai
+                            </p>
+                            <ul className="space-y-1">
+                              {nlp.highlights.warnings.slice(0, 4).map((w, i) => (
+                                <li key={i} className="text-xs text-amber-700 flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                  {w}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {nlp.highlights.positives.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-emerald-700 mb-1.5 flex items-center gap-1">
+                              <CheckCircle className="h-3 w-3" /> Kondisi positif
+                            </p>
+                            <ul className="space-y-1">
+                              {nlp.highlights.positives.slice(0, 3).map((p, i) => (
+                                <li key={i} className="text-xs text-emerald-700 flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                  {p}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                      {/* Concepts */}
-                      <div>
-                        <p className="text-xs font-semibold text-slate-600 mb-1.5">
-                          Step 3 · Stemming
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {nlpResult?.pipeline.step3_stemmed.concepts.map(
-                            (c, i) => {
+
+                      {nlp.advice.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-600 mb-1.5">💡 Rekomendasi</p>
+                          <ul className="space-y-1">
+                            {nlp.advice.slice(0, 5).map((a, i) => (
+                              <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
+                                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#00a991] shrink-0" />
+                                {a}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    <details className="border-t border-slate-100 pt-2">
+                      <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-500 select-none">
+                        📊 Lihat parameter cuaca terdeteksi
+                      </summary>
+                      <div className="pt-2 space-y-2">
+                        <div>
+                          <p className="text-xs font-medium text-slate-500 mb-1">Kondisi teridentifikasi</p>
+                          <div className="flex flex-wrap gap-1">
+                            {nlpResult?.pipeline.step3_stemmed.concepts.map((c, i) => {
                               const color = {
-                                positif: "bg-emerald-100 text-emerald-700",
-                                netral: "bg-blue-100 text-blue-700",
-                                waspada: "bg-amber-100 text-amber-700",
+                                positif:   "bg-emerald-100 text-emerald-700",
+                                netral:    "bg-blue-100 text-blue-700",
+                                waspada:   "bg-amber-100 text-amber-700",
                                 berbahaya: "bg-red-100 text-red-700",
-                              }[c.sentiment];
+                              }[c.sentiment]
                               return (
-                                <span
-                                  key={i}
-                                  className={`text-xs px-2 py-0.5 rounded-full font-mono ${color}`}
-                                >
-                                  {c.concept}
+                                <span key={i} className={`text-xs px-1.5 py-0.5 rounded font-mono ${color}`}>
+                                  {c.humanLabel}
                                 </span>
-                              );
-                            },
-                          )}
+                              )
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </details>
+                    </details>
+
+                  </div>
                 </div>
               )}
-              {/* ── END BAGIAN NLP ── */}
+
             </>
           ) : (
-            // Detail berita — tidak berubah
             <>
-              <button
-                onClick={() => setSelectedNews(null)}
-                className="text-[#00a991] text-sm mb-4 flex items-center gap-1 hover:underline"
-              >
+              <button onClick={() => setSelectedNews(null)} className="text-[#00a991] text-sm mb-4 flex items-center gap-1 hover:underline">
                 <ArrowLeft className="h-4 w-4" /> Kembali ke ringkasan
               </button>
               <div className="rounded-xl bg-teal-50 h-44 flex items-center justify-center mb-5">
                 <Wind className="h-20 w-20 text-teal-200" />
               </div>
-              <p className="text-slate-700 leading-relaxed text-sm">
-                {selectedNews.content}
-              </p>
+              <p className="text-slate-700 leading-relaxed text-sm">{selectedNews.content}</p>
               <div className="flex flex-wrap gap-2 mt-5">
-                <span className="bg-[#e6f6f4] text-[#008774] text-xs px-3 py-1 rounded-full font-medium">
-                  Energi Terbarukan
-                </span>
-                <span className="bg-[#e6f6f4] text-[#008774] text-xs px-3 py-1 rounded-full font-medium">
-                  Prakiraan Ventara
-                </span>
-                <span className="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded-full">
-                  📍 {locationName}
-                </span>
+                <span className="bg-[#e6f6f4] text-[#008774] text-xs px-3 py-1 rounded-full font-medium">Energi Terbarukan</span>
+                <span className="bg-[#e6f6f4] text-[#008774] text-xs px-3 py-1 rounded-full font-medium">Prakiraan Ventara</span>
+                <span className="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded-full">📍 {locationName}</span>
               </div>
             </>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 // ─── Main Page ───────────────────────────────────────────────────────────
 
 export default function RealtimePage() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [activeView, setActiveView] = useState<ActiveView>("daily");
-  const [trendFilter, setTrendFilter] = useState<TrendFilter>("hourly");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [activeView,  setActiveView]  = useState<ActiveView>("daily")
+  const [trendFilter, setTrendFilter] = useState<TrendFilter>("hourly")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isLoading,   setIsLoading]   = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
 
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
-  const [locName, setLocName] = useState("");
-  const [daily, setDaily] = useState<DailyData | null>(null);
-  const [hourly, setHourly] = useState<HourlyData | null>(null);
-  const [avgWind, setAvgWind] = useState("-");
-  const [dominantDir, setDominantDir] = useState("—");
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [modalData, setModalData] = useState<ModalData | null>(null);
+  const [lat,         setLat]         = useState<number | null>(null)
+  const [lng,         setLng]         = useState<number | null>(null)
+  const [locName,     setLocName]     = useState("")
+  const [daily,       setDaily]       = useState<DailyData | null>(null)
+  const [hourly,      setHourly]      = useState<HourlyData | null>(null)
+  const [avgWind,     setAvgWind]     = useState("-")
+  const [dominantDir, setDominantDir] = useState("—")
+  const [news,        setNews]        = useState<NewsItem[]>([])
+  const [modalData,   setModalData]   = useState<ModalData | null>(null)
 
-  const [searchSuggestions, setSearchSuggestions] = useState<
-    { lat: number; lng: number; displayName: string }[]
-  >([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchValueRef = useRef("");
+  const [searchSuggestions, setSearchSuggestions] = useState<{ lat: number; lng: number; displayName: string }[]>([])
+  const [showSuggestions,   setShowSuggestions]   = useState(false)
+  const [searchLoading,     setSearchLoading]     = useState(false)
+  const searchRef         = useRef<HTMLDivElement>(null)
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchValueRef    = useRef("")
 
   interface LocationCache {
-    daily: DailyData | null;
-    hourly: HourlyData | null;
-    avgWind: string;
-    dominantDir: string;
-    news: NewsItem[];
-    timestamp: number;
+    daily: DailyData | null; hourly: HourlyData | null
+    avgWind: string; dominantDir: string; news: NewsItem[]; timestamp: number
   }
 
-  const locationCache = new Map<string, LocationCache>();
-  const CACHE_TTL = 5 * 60 * 1000;
+  const locationCacheRef = useRef(new Map<string, LocationCache>())
+  const CACHE_TTL        = 5 * 60 * 1000
 
-  function generateRegionId(lat: number, lng: number): string {
-    return `${lat.toFixed(2)},${lng.toFixed(2)}`;
-  }
+  function generateRegionId(lat: number, lng: number): string { return `${lat.toFixed(2)},${lng.toFixed(2)}` }
+
 
   function getCachedData(regionId: string): LocationCache | null {
-    const cached = locationCache.get(regionId);
-    if (!cached) return null;
-    if (Date.now() - cached.timestamp > CACHE_TTL) {
-      locationCache.delete(regionId);
-      return null;
-    }
-    return cached;
+    const cached = locationCacheRef.current.get(regionId)
+    if (!cached) return null
+    if (Date.now() - cached.timestamp > CACHE_TTL) { locationCacheRef.current.delete(regionId); return null }
+    return cached
   }
 
   function validateRegion(lat: number, lng: number, name: string) {
-    const regionId = generateRegionId(lat, lng);
-    const isValid = lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141;
-    return { lat, lng, name, isValid, regionId };
+    const regionId = generateRegionId(lat, lng)
+    const isValid  = lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141
+    return { lat, lng, name, isValid, regionId }
   }
 
-  const loadLocation = useCallback(
-    async (newLat: number, newLng: number, name: string) => {
-      const validation = validateRegion(newLat, newLng, name);
-      if (!validation.isValid)
-        setError(
-          `Wilayah ${name} di luar jangkauan Indonesia. Menggunakan data default.`,
-        );
+  const loadLocation = useCallback(async (newLat: number, newLng: number, name: string) => {
+    const validation = validateRegion(newLat, newLng, name)
+    if (!validation.isValid) setError(`Wilayah ${name} di luar jangkauan Indonesia. Menggunakan data default.`)
 
-      setShowSuggestions(false);
-      setIsLoading(true);
-      setError(null);
+    setShowSuggestions(false)
+    setIsLoading(true)
+    setError(null)
 
-      const regionId = validation.regionId;
-      const cached = getCachedData(regionId);
+    const regionId = validation.regionId
+    const cached   = getCachedData(regionId)
 
+    if (cached) {
+      setDaily(cached.daily); setHourly(cached.hourly)
+      setAvgWind(cached.avgWind); setDominantDir(cached.dominantDir); setNews(cached.news)
+      setLat(newLat); setLng(newLng); setLocName(name)
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      setNews([])
+      const [dailyData, hourlyData] = await Promise.all([
+        fetchDaily(newLat, newLng),
+        fetchHourly(newLat, newLng),
+      ])
+      const speeds = dailyData.wind_speed_10m_max
+      const avg    = speeds.length > 0 ? (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1) : "0"
+      const dir    = dailyData.wind_direction_10m_dominant[0] ? degToCardinal(dailyData.wind_direction_10m_dominant[0]) : "—"
+      const cacheData: LocationCache = {
+        daily: dailyData, hourly: hourlyData,
+        avgWind: avg + " km/jam", dominantDir: dir,
+        news: generateNews(name, avg, dir), timestamp: Date.now(),
+      }
+      locationCacheRef.current.set(regionId, cacheData)
+      setDaily(dailyData); setHourly(hourlyData)
+      setAvgWind(avg + " km/jam"); setDominantDir(dir); setNews(cacheData.news)
+      setLat(newLat); setLng(newLng); setLocName(name)
+      localStorage.setItem("ventara_lat",  newLat.toString())
+      localStorage.setItem("ventara_lng",  newLng.toString())
+      localStorage.setItem("ventara_name", name)
+    } catch (e: unknown) {
+      const cached = getCachedData(regionId)
       if (cached) {
-        setDaily(cached.daily);
-        setHourly(cached.hourly);
-        setAvgWind(cached.avgWind);
-        setDominantDir(cached.dominantDir);
-        setNews(cached.news);
-        setLat(newLat);
-        setLng(newLng);
-        setLocName(name);
-        setIsLoading(false);
-        return;
+        setDaily(cached.daily); setHourly(cached.hourly)
+        setAvgWind(cached.avgWind); setDominantDir(cached.dominantDir); setNews(cached.news)
+        setError(`Gagal memuat data terbaru. Menampilkan data cache untuk ${name}.`)
+      } else {
+        setError(e instanceof Error ? e.message : "Gagal memuat data cuaca.")
       }
-
-      try {
-        setNews([]);
-        const [dailyData, hourlyData] = await Promise.all([
-          fetchDaily(newLat, newLng),
-          fetchHourly(newLat, newLng),
-        ]);
-        const speeds = dailyData.wind_speed_10m_max;
-        const avg =
-          speeds.length > 0
-            ? (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1)
-            : "0";
-        const dir = dailyData.wind_direction_10m_dominant[0]
-          ? degToCardinal(dailyData.wind_direction_10m_dominant[0])
-          : "—";
-        const cacheData: LocationCache = {
-          daily: dailyData,
-          hourly: hourlyData,
-          avgWind: avg + " m/s",
-          dominantDir: dir,
-          news: generateNews(name, avg, dir),
-          timestamp: Date.now(),
-        };
-        locationCache.set(regionId, cacheData);
-        setDaily(dailyData);
-        setHourly(hourlyData);
-        setAvgWind(avg + " m/s");
-        setDominantDir(dir);
-        setNews(cacheData.news);
-        setLat(newLat);
-        setLng(newLng);
-        setLocName(name);
-        localStorage.setItem("ventara_lat", newLat.toString());
-        localStorage.setItem("ventara_lng", newLng.toString());
-        localStorage.setItem("ventara_name", name);
-      } catch (e: unknown) {
-        const cached = getCachedData(regionId);
-        if (cached) {
-          setDaily(cached.daily);
-          setHourly(cached.hourly);
-          setAvgWind(cached.avgWind);
-          setDominantDir(cached.dominantDir);
-          setNews(cached.news);
-          setError(
-            `Gagal memuat data terbaru. Menampilkan data cache untuk ${name}.`,
-          );
-        } else {
-          setError(e instanceof Error ? e.message : "Gagal memuat data cuaca.");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
-  ); // eslint-disable-line react-hooks/exhaustive-deps
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("ventara_lat");
-      localStorage.removeItem("ventara_lng");
-      localStorage.removeItem("ventara_name");
+      localStorage.removeItem("ventara_lat")
+      localStorage.removeItem("ventara_lng")
+      localStorage.removeItem("ventara_name")
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node))
-        setShowSuggestions(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowSuggestions(false)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    };
-  }, []);
+      document.removeEventListener("mousedown", handleClickOutside)
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    }
+  }, [])
 
   const handleSearchInput = (value: string) => {
-    searchValueRef.current = value;
-    setSearchQuery(value);
-    setError(null);
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchValueRef.current = value
+    setSearchQuery(value)
+    setError(null)
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
     if (value.length >= 2) {
-      setSearchLoading(true);
+      setSearchLoading(true)
       searchDebounceRef.current = setTimeout(async () => {
         try {
-          const suggestions = await searchLocationSuggestions(value);
-          setSearchSuggestions(suggestions);
-          setShowSuggestions(true);
-        } catch {
-          setSearchSuggestions([]);
-        } finally {
-          setSearchLoading(false);
-        }
-      }, 350);
+          const suggestions = await searchLocationSuggestions(value)
+          setSearchSuggestions(suggestions)
+          setShowSuggestions(true)
+        } catch { setSearchSuggestions([]) }
+        finally  { setSearchLoading(false) }
+      }, 350)
     } else {
-      setSearchSuggestions([]);
-      setShowSuggestions(false);
+      setSearchSuggestions([])
+      setShowSuggestions(false)
     }
-  };
+  }
 
-  const handleSelectSuggestion = async (suggestion: {
-    lat: number;
-    lng: number;
-    displayName: string;
-  }) => {
-    searchValueRef.current = suggestion.displayName;
-    setSearchQuery(suggestion.displayName);
-    setShowSuggestions(false);
-    setSearchSuggestions([]);
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-      searchDebounceRef.current = null;
-    }
-    await loadLocation(suggestion.lat, suggestion.lng, suggestion.displayName);
-  };
+  const handleSelectSuggestion = async (suggestion: { lat: number; lng: number; displayName: string }) => {
+    searchValueRef.current = suggestion.displayName
+    setSearchQuery(suggestion.displayName)
+    setShowSuggestions(false); setSearchSuggestions([])
+    if (searchDebounceRef.current) { clearTimeout(searchDebounceRef.current); searchDebounceRef.current = null }
+    await loadLocation(suggestion.lat, suggestion.lng, suggestion.displayName)
+  }
+
 
   const handleSearch = async (value?: string) => {
-    const q = (value ?? searchValueRef.current).trim();
-    if (!q) return;
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-      searchDebounceRef.current = null;
-    }
-    setSearchLoading(true);
-    setShowSuggestions(false);
+    const q = (value ?? searchValueRef.current).trim()
+    if (!q) return
+    if (searchDebounceRef.current) { clearTimeout(searchDebounceRef.current); searchDebounceRef.current = null }
+    setSearchLoading(true); setShowSuggestions(false)
     try {
-      const { lat: sLat, lng: sLng, displayName } = await searchLocationAPI(q);
-      setSearchQuery(displayName);
-      searchValueRef.current = displayName;
-      await loadLocation(sLat, sLng, displayName);
+      const { lat: sLat, lng: sLng, displayName } = await searchLocationAPI(q)
+      setSearchQuery(displayName); searchValueRef.current = displayName
+      await loadLocation(sLat, sLng, displayName)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Gagal mencari lokasi.");
+      setError(e instanceof Error ? e.message : "Gagal mencari lokasi.")
     } finally {
-      setSearchLoading(false);
+      setSearchLoading(false)
     }
-  };
+  }
 
   return (
     <div className="flex h-screen">
@@ -1643,12 +1335,13 @@ export default function RealtimePage() {
               </div>
             )}
 
+
             {/* Trends */}
             {!isLoading && !error && activeView === "trends" && (
               <TrendsView hourlyData={hourly} filter={trendFilter} onFilterChange={setTrendFilter} />
             )}
 
-            {/* Detail Modal — sekarang terima lat & lng juga */}
+            {/* Detail Modal */}
             <DetailModal
               data={modalData}
               news={news}

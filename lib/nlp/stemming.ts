@@ -25,59 +25,59 @@ export interface StemmedWeather {
 
 const TOKEN_CONCEPT_MAP: Record<string, Omit<StemmedConcept, "concept">> = {
   // Suhu
-  sangat_dingin:  { sentiment: "waspada",   weight: 0.9, humanLabel: "Sangat dingin",  advice: "Kenakan pakaian hangat berlapis, hindari paparan angin." },
-  dingin:         { sentiment: "netral",    weight: 0.7, humanLabel: "Dingin",          advice: "Gunakan jaket tipis atau sweater." },
-  sejuk:          { sentiment: "positif",   weight: 1.0, humanLabel: "Sejuk",           advice: "Cuaca nyaman untuk aktivitas luar ruangan." },
-  hangat:         { sentiment: "positif",   weight: 1.0, humanLabel: "Hangat",          advice: "Cuaca nyaman, tetap jaga hidrasi." },
-  panas:          { sentiment: "waspada",   weight: 0.6, humanLabel: "Panas",           advice: "Minum air yang cukup, hindari paparan matahari langsung saat siang." },
-  sangat_panas:   { sentiment: "berbahaya", weight: 0.2, humanLabel: "Sangat panas",    advice: "Hindari aktivitas luar ruangan intensif, risiko heat stroke tinggi." },
+  sangat_dingin: { sentiment: "waspada", weight: 0.9, humanLabel: "Dingin menusuk tulang", advice: "Jaket tebal dan syal bukan lagi pilihan, tapi kebutuhan." },
+  dingin: { sentiment: "netral", weight: 0.7, humanLabel: "Udara dingin terasa", advice: "Sebaiknya pakai jaket atau sweater tipis kalau keluar." },
+  sejuk: { sentiment: "positif", weight: 1.0, humanLabel: "Udara sejuk dan segar", advice: "Cuaca nyaman banget buat jalan-jalan atau olahraga ringan." },
+  hangat: { sentiment: "positif", weight: 1.0, humanLabel: "Hangat bersahabat", advice: "Cuaca enak, tapi jangan lupa minum cukup." },
+  panas: { sentiment: "waspada", weight: 0.6, humanLabel: "Panas menyengat", advice: "Hindari terik langsung siang hari, perbanyak istirahat di tempat teduh." },
+  sangat_panas: { sentiment: "berbahaya", weight: 0.2, humanLabel: "Panas ekstrem berbahaya", advice: "Jangan paksakan aktivitas outdoor, risiko heat stroke sangat nyata." },
 
   // Kelembapan
-  sangat_kering:  { sentiment: "waspada",  weight: 0.5, humanLabel: "Udara sangat kering", advice: "Perbanyak minum air, gunakan pelembap kulit." },
-  kering:         { sentiment: "waspada",  weight: 0.7, humanLabel: "Udara kering",         advice: "Jaga hidrasi tubuh." },
-  normal:         { sentiment: "positif",  weight: 1.0, humanLabel: "Kelembapan normal",    advice: "Kondisi udara nyaman." },
-  lembap:         { sentiment: "netral",   weight: 0.8, humanLabel: "Udara lembap",         advice: "Pakaian mungkin terasa sedikit lengket." },
-  sangat_lembap:  { sentiment: "waspada",  weight: 0.5, humanLabel: "Udara sangat lembap",  advice: "Waspada jamur dan dehidrasi tersembunyi." },
+  sangat_kering: { sentiment: "waspada", weight: 0.5, humanLabel: "Udara kering luar biasa", advice: "Kulit dan tenggorokan cepat kering — pelembap dan air putih jadi senjata utama." },
+  kering: { sentiment: "waspada", weight: 0.7, humanLabel: "Udara agak kering", advice: "Minum lebih banyak dari biasanya, udara menarik cairan dari tubuh." },
+  normal: { sentiment: "positif", weight: 1.0, humanLabel: "Kelembapan udara pas", advice: "Udara nyaman di kulit, nggak gerah nggak kering." },
+  lembap: { sentiment: "netral", weight: 0.8, humanLabel: "Udara terasa lembap", advice: "Baju mungkin terasa sedikit lengket, tapi masih nyaman." },
+  sangat_lembap: { sentiment: "waspada", weight: 0.5, humanLabel: "Udara gerah dan berat", advice: "Waspada jamur di rumah dan dehidrasi yang nggak terasa." },
 
   // Angin
-  tenang:         { sentiment: "positif",  weight: 1.0, humanLabel: "Angin tenang",     advice: "Tidak ada gangguan angin." },
-  sepoi_sepoi:    { sentiment: "positif",  weight: 1.0, humanLabel: "Angin sepoi-sepoi", advice: "Angin ringan, terasa segar." },
-  angin_ringan:   { sentiment: "positif",  weight: 0.9, humanLabel: "Angin ringan",      advice: "Nyaman untuk aktivitas outdoor." },
-  angin_sedang:   { sentiment: "netral",   weight: 0.7, humanLabel: "Angin sedang",      advice: "Perhatikan benda ringan di luar ruangan." },
-  angin_kencang:  { sentiment: "waspada",  weight: 0.4, humanLabel: "Angin kencang",     advice: "Hindari aktivitas di tempat terbuka, waspada pohon tumbang." },
-  badai:          { sentiment: "berbahaya",weight: 0.1, humanLabel: "Badai",             advice: "Tetap di dalam ruangan, ikuti peringatan cuaca setempat." },
+  tenang: { sentiment: "positif", weight: 1.0, humanLabel: "Angin tenang, udara hening", advice: "Tidak ada gangguan angin — kondisi tenang dan damai." },
+  sepoi_sepoi: { sentiment: "positif", weight: 1.0, humanLabel: "Angin sepoi-sepoi basa", advice: "Angin ringan menerpa, terasa segar dan menenangkan." },
+  angin_ringan: { sentiment: "positif", weight: 0.9, humanLabel: "Angin ringan bersahabat", advice: "Kondisi outdoor nyaman, angin sejuk mengiringi." },
+  angin_sedang: { sentiment: "netral", weight: 0.7, humanLabel: "Angin lumayan kencang", advice: "Barang-barang ringan di luar ruangan perlu diamankan." },
+  angin_kencang: { sentiment: "waspada", weight: 0.4, humanLabel: "Angin kencang menerpa", advice: "Hindari berteduh di bawah pohon besar atau papan reklame." },
+  badai: { sentiment: "berbahaya", weight: 0.1, humanLabel: "Badai angin berbahaya", advice: "Tetap di dalam ruangan, jauhi jendela dan ikuti info resmi." },
 
   // Kondisi cuaca (weather primary)
-  "kondisi_sunny":           { sentiment: "positif",  weight: 1.0, humanLabel: "Cerah",              advice: "Hari yang cerah, cocok untuk aktivitas outdoor." },
-  "kondisi_mostly_sunny":    { sentiment: "positif",  weight: 1.0, humanLabel: "Cerah berawan",       advice: "Sebagian besar cerah, nyaman untuk beraktivitas." },
-  "kondisi_partly_cloudy":   { sentiment: "positif",  weight: 0.9, humanLabel: "Berawan sebagian",    advice: "Cuaca bervariasi, bawa jaket ringan." },
-  "kondisi_mostly_cloudy":   { sentiment: "netral",   weight: 0.8, humanLabel: "Banyak awan",         advice: "Pencahayaan redup, aktivitas outdoor tetap aman." },
-  "kondisi_cloudy":          { sentiment: "netral",   weight: 0.7, humanLabel: "Mendung",             advice: "Bawa payung sebagai antisipasi." },
-  "kondisi_overcast":        { sentiment: "netral",   weight: 0.6, humanLabel: "Langit tertutup awan",advice: "Bawa payung, kemungkinan hujan meningkat." },
-  "kondisi_rain":            { sentiment: "waspada",  weight: 0.4, humanLabel: "Hujan",               advice: "Bawa payung, waspadai genangan dan jalanan licin." },
-  "kondisi_heavy_rain":      { sentiment: "berbahaya",weight: 0.2, humanLabel: "Hujan lebat",         advice: "Hindari bepergian jika tidak mendesak, waspada banjir." },
-  "kondisi_thunderstorm":    { sentiment: "berbahaya",weight: 0.1, humanLabel: "Badai petir",         advice: "Tetap di dalam ruangan, hindari pohon tinggi dan bangunan terbuka." },
-  "kondisi_snow":            { sentiment: "waspada",  weight: 0.4, humanLabel: "Bersalju",            advice: "Gunakan pakaian hangat, hati-hati jalanan licin." },
-  "kondisi_fog":             { sentiment: "waspada",  weight: 0.5, humanLabel: "Berkabut",            advice: "Kurangi kecepatan berkendara, nyalakan lampu kendaraan." },
-  "kondisi_haze":            { sentiment: "waspada",  weight: 0.5, humanLabel: "Berkabut tipis",      advice: "Perhatikan kualitas udara, gunakan masker jika perlu." },
-  "kondisi_clear":           { sentiment: "positif",  weight: 1.0, humanLabel: "Cerah",              advice: "Kondisi ideal untuk segala aktivitas outdoor." },
-  "kondisi_drizzle":         { sentiment: "netral",   weight: 0.6, humanLabel: "Gerimis",             advice: "Bawa payung kecil atau jas hujan tipis." },
+  "kondisi_sunny": { sentiment: "positif", weight: 1.0, humanLabel: "Langit cerah bersinar", advice: "Hari yang cerah — waktu yang pas untuk jemur baju atau piknik." },
+  "kondisi_mostly_sunny": { sentiment: "positif", weight: 1.0, humanLabel: "Cerah dengan sedikit awan", advice: "Sebagian besar cerah, nyaman untuk segala aktivitas." },
+  "kondisi_partly_cloudy": { sentiment: "positif", weight: 0.9, humanLabel: "Berawan sebagian", advice: "Cuaca bervariasi, kalau bepergian jauh bawa jaket tipis." },
+  "kondisi_mostly_cloudy": { sentiment: "netral", weight: 0.8, humanLabel: "Langit didominasi awan", advice: "Cahaya matahari terbatas, tapi aktivitas outdoor tetap aman." },
+  "kondisi_cloudy": { sentiment: "netral", weight: 0.7, humanLabel: "Mendung merata", advice: "Langit kelabu — mending siapkan payung dari sekarang." },
+  "kondisi_overcast": { sentiment: "netral", weight: 0.6, humanLabel: "Langit tertutup awan tebal", advice: "Jangan lupa payung, peluang hujan meningkat." },
+  "kondisi_rain": { sentiment: "waspada", weight: 0.4, humanLabel: "Hujan turun", advice: "Payung atau jas hujan wajib — jalanan juga bakal licin." },
+  "kondisi_heavy_rain": { sentiment: "berbahaya", weight: 0.2, humanLabel: "Hujan deras mengguyur", advice: "Hindari keluar kalau nggak urgent, waspada banjir di tempat rendah." },
+  "kondisi_thunderstorm": { sentiment: "berbahaya", weight: 0.1, humanLabel: "Badai petir mengancam", advice: "Jangan berteduh di bawah pohon, hindari area terbuka." },
+  "kondisi_snow": { sentiment: "waspada", weight: 0.4, humanLabel: "Salju turun", advice: "Pakai pakaian hangat berlapis, jalanan licin ekstra hati-hati." },
+  "kondisi_fog": { sentiment: "waspada", weight: 0.5, humanLabel: "Kabut tebal menyelimuti", advice: "Kurangi kecepatan berkendara, nyalakan lampu kabut." },
+  "kondisi_haze": { sentiment: "waspada", weight: 0.5, humanLabel: "Kabut tipis atau asap", advice: "Cek kualitas udara, gunakan masker kalau perlu." },
+  "kondisi_clear": { sentiment: "positif", weight: 1.0, humanLabel: "Langit bersih total", advice: "Kondisi ideal untuk apa pun — olahraga, jalan-jalan, jemuran." },
+  "kondisi_drizzle": { sentiment: "netral", weight: 0.6, humanLabel: "Gerimis tipis", advice: "Gerimis aja sih, tapi payung kecil tetap berguna." },
 
   // UV
-  uv_rendah:           { sentiment: "positif",  weight: 1.0, humanLabel: "UV rendah",        advice: "Aman tanpa tabir surya untuk paparan singkat." },
-  uv_sedang:           { sentiment: "netral",   weight: 0.8, humanLabel: "UV sedang",         advice: "Gunakan tabir surya SPF 30+ jika beraktivitas > 30 menit." },
-  uv_tinggi:           { sentiment: "waspada",  weight: 0.5, humanLabel: "UV tinggi",         advice: "Wajib tabir surya SPF 50+, pakai topi dan kacamata hitam." },
-  uv_sangat_tinggi:    { sentiment: "waspada",  weight: 0.3, humanLabel: "UV sangat tinggi",  advice: "Hindari paparan langsung antara pukul 10.00–16.00." },
-  uv_ekstrem:          { sentiment: "berbahaya",weight: 0.1, humanLabel: "UV ekstrem",        advice: "Paparan matahari berbahaya, tetap di dalam ruangan." },
+  uv_rendah: { sentiment: "positif", weight: 1.0, humanLabel: "Sinar UV rendah", advice: "Aman tanpa tabir surya untuk aktivitas singkat." },
+  uv_sedang: { sentiment: "netral", weight: 0.8, humanLabel: "UV sedang", advice: "Pakai SPF 30+ kalau beraktivitas lebih dari 30 menit di luar." },
+  uv_tinggi: { sentiment: "waspada", weight: 0.5, humanLabel: "UV tinggi, perlu waspada", advice: "Tabir surya SPF 50+ wajib, topi dan kacamata hitam jadi pelengkap." },
+  uv_sangat_tinggi: { sentiment: "waspada", weight: 0.3, humanLabel: "UV sangat tinggi", advice: "Hindari keluar jam 10 pagi sampai 4 sore kalau nggak penting." },
+  uv_ekstrem: { sentiment: "berbahaya", weight: 0.1, humanLabel: "UV ekstrem, bahaya kulit", advice: "Paparan matahari berbahaya — lebih baik bertahan di dalam ruangan." },
 
   // Visibilitas
-  jarak_pandang_baik:   { sentiment: "positif", weight: 1.0, humanLabel: "Jarak pandang baik",   advice: "Kondisi berkendara aman." },
-  jarak_pandang_sedang: { sentiment: "netral",  weight: 0.6, humanLabel: "Jarak pandang sedang", advice: "Berhati-hati saat berkendara, kurangi kecepatan." },
-  jarak_pandang_buruk:  { sentiment: "waspada", weight: 0.3, humanLabel: "Jarak pandang buruk",  advice: "Hindari berkendara, nyalakan lampu kendaraan." },
+  jarak_pandang_baik: { sentiment: "positif", weight: 1.0, humanLabel: "Jarak pandang bersih", advice: "Kondisi berkendara aman, visibilitas optimal." },
+  jarak_pandang_sedang: { sentiment: "netral", weight: 0.6, humanLabel: "Visibilitas agak terbatas", advice: "Kurangi kecepatan—jalanan tidak sejelas biasanya." },
+  jarak_pandang_buruk: { sentiment: "waspada", weight: 0.3, humanLabel: "Kabut batasi pandangan", advice: "Jarak pandang sangat terbatas — kalau bisa tunda perjalanan." },
 
   // Hujan
-  tidak_hujan:          { sentiment: "positif", weight: 1.0, humanLabel: "Tidak hujan",         advice: "Aman beraktivitas di luar ruangan." },
-  curah_hujan_nol:      { sentiment: "positif", weight: 1.0, humanLabel: "Tidak ada curah hujan",advice: "Tidak ada hujan terdeteksi." },
+  tidak_hujan: { sentiment: "positif", weight: 1.0, humanLabel: "Langit kering", advice: "Tidak ada hujan — aman untuk aktivitas luar ruangan." },
+  curah_hujan_nol: { sentiment: "positif", weight: 1.0, humanLabel: "Nol curah hujan", advice: "Tidak ada hujan terdeteksi, silakan beraktivitas dengan tenang." },
 }
 
 // ─── Stemmer untuk label suhu (berdasarkan nilai numerik) ────────────────────
@@ -138,19 +138,19 @@ function stemPrecipitation(tokens: WeatherToken[]): StemmedConcept[] {
 
   if (pop === 0) {
     concept = "tidak_hujan"; sentiment = "positif"
-    humanLabel = "Tidak ada peluang hujan"; advice = "Tidak perlu membawa payung."
+    humanLabel = "Langit cerah, nol peluang hujan"; advice = "Payung bisa ditinggal, hari ini aman."
   } else if (pop <= 20) {
     concept = "peluang_hujan_kecil"; sentiment = "netral"
-    humanLabel = `Peluang hujan kecil (${pop}%)`; advice = "Opsional membawa payung."
+    humanLabel = `Peluang hujan kecil (${pop}%)`; advice = "Kemungkinan kecil hujan — payung opsional, tergantung feeling."
   } else if (pop <= 50) {
     concept = "peluang_hujan_sedang"; sentiment = "netral"
-    humanLabel = `Peluang hujan sedang (${pop}%)`; advice = "Disarankan membawa payung."
+    humanLabel = `Peluang hujan lumayan (${pop}%)`; advice = "Mending bawa payung deh, daripada kehujanan di tengah jalan."
   } else if (pop <= 80) {
     concept = "kemungkinan_hujan"; sentiment = "waspada"
-    humanLabel = `Kemungkinan hujan (${pop}%)`; advice = "Bawa payung, persiapkan jas hujan."
+    humanLabel = `Berpotensi hujan (${pop}%)`; advice = "Siapkan payung atau jas hujan, peluangnya cukup besar."
   } else {
     concept = "hampir_pasti_hujan"; sentiment = "waspada"
-    humanLabel = `Hampir pasti hujan (${pop}%)`; advice = "Siapkan perlengkapan hujan lengkap."
+    humanLabel = `Hujan nyaris pasti (${pop}%)`; advice = "Perlengkapan hujan lengkap wajib — kalau bisa tunda perjalanan."
   }
 
   return [{ concept, sentiment, weight: 1 - pop / 100, humanLabel, advice }]
@@ -165,8 +165,8 @@ function calcOverall(concepts: StemmedConcept[]): Pick<StemmedWeather, "overallS
   const score = Math.round(avgWeight * 100)
 
   const hasBerbahaya = concepts.some((c) => c.sentiment === "berbahaya")
-  const waspada      = concepts.filter((c) => c.sentiment === "waspada").length
-  const total        = concepts.length
+  const waspada = concepts.filter((c) => c.sentiment === "waspada").length
+  const total = concepts.length
 
   let overallSentiment: StemmedWeather["overallSentiment"]
   if (hasBerbahaya) overallSentiment = "berbahaya"

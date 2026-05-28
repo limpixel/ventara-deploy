@@ -1,4 +1,9 @@
-from flask import Flask
+from flask import Flask, jsonify, request
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 from config import *
 from flask_cors import CORS
@@ -9,7 +14,7 @@ from flask_cors import CORS
 from routes.main_routes import main_bp
 from routes.upload import upload_bp
 from routes.generate import generate_bp
-
+from routes.auth import auth_bp
 # =========================
 # UTILS
 # =========================
@@ -39,6 +44,7 @@ from training.load_dl import (
 # APP INIT
 # =========================
 app = Flask(__name__)
+
 CORS(
     app,
     supports_credentials=True,
@@ -56,6 +62,8 @@ app.register_blueprint(main_bp)
 app.register_blueprint(upload_bp)
 
 app.register_blueprint(generate_bp)
+
+app.register_blueprint(auth_bp)
 
 # =========================
 # LOAD DATASET

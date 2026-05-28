@@ -1,0 +1,15 @@
+[
+  {
+    "username": "admin",
+    "password": "admin123",
+    "role": "admin",
+    "name": "Administrator"
+  },
+  {
+    "username": "kangkungkang",
+    "email": "nail12@gmail.com",
+    "password": "masukin123",
+    "role": "user",
+    "name": "nailajah69"
+  }
+]

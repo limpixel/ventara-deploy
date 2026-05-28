@@ -267,8 +267,8 @@ function tokenizeUvAndVisibility(raw: WeatherRaw): WeatherToken[] {
       raw.visibilityKM >= 10
         ? "jarak_pandang_baik"
         : raw.visibilityKM >= 5
-        ? "jarak_pandang_sedang"
-        : "jarak_pandang_buruk"
+          ? "jarak_pandang_sedang"
+          : "jarak_pandang_buruk"
 
     tokens.push({
       key: "visibility_label",

@@ -5,34 +5,54 @@ import { useState } from 'react';
 
 export type AuthView = 'landing' | 'register' | 'login';
 
-const USERS = [
-  { username: "user", password: "user123", role: "user", name: "Kakang Kukung" },
-  { username: "admin", password: "admin123", role: "admin", name: "Administrator" },
-];
-
 export function useAuth() {
   const router = useRouter();
   const [view, setView] = useState<AuthView>('landing');
   const [isError, setIsError] = useState(false);
 
-  const handleLogin = (username: string, password: string) => {
-    const found = USERS.find(
-      (u) => u.username === username && u.password === password
-    );
+  const handleLogin = async (
+  username: string,
+  password: string,
+  token: string
+) => {
+  try {
+    const res = await fetch("http://localhost:5000/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        username,
+        password,
+        token,
+      }),
+    });
 
-    if (!found) {
+    const data = await res.json();
+
+    if (!data.success) {
       setIsError(true);
-      setTimeout(() => setIsError(false), 2000);
+      setTimeout(() => setIsError(false), 4000);
       return;
     }
 
-    localStorage.setItem("ventara_role", found.role);
-    localStorage.setItem("ventara_name", found.name);
+    localStorage.setItem("ventara_role", data.role);
+    localStorage.setItem("ventara_name", data.name);
+    localStorage.setItem("ventara_username", data.username);
+    localStorage.setItem("ventara_email", data.email || "");
 
-    router.push(found.role === "admin" ? "/admin/dashboard" : "/forecasting");
-  };
+    router.push(
+      data.role === "admin"
+        ? "/admin/dashboard"
+        : "/forecasting"
+    );
 
-  const handleRegister = (username: string, email: string, password: string) => {
+  } catch {
+    setIsError(true);
+    setTimeout(() => setIsError(false), 4000);
+  }
+};
+
+  const handleRegister = async (username: string, email: string, password: string) => {
     if (!username || !email || !password) {
       alert('⚠️ All fields are required.');
       return;
@@ -45,8 +65,27 @@ export function useAuth() {
       alert('🔒 Password minimum 4 characters.');
       return;
     }
-    alert(`🎉 Welcome ${username}! Please login.`);
-    setView('login');
+
+    try {
+      const res = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password, name: username }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(`❌ ${data.message}`);
+        return;
+      }
+
+      alert(`🎉 ${data.message} Please login.`);
+      setView('login');
+
+    } catch {
+      alert('❌ Server error. Please try again.');
+    }
   };
 
   const handleForgotPassword = () => {

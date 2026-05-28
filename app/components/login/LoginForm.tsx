@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { Bebas_Neue } from "next/font/google";
 import { Poppins } from "next/font/google";
 
+import ReCAPTCHA from "react-google-recaptcha";
+
 interface Props {
-  onLogin: (username: string, password: string) => void;
+  onLogin: (
+    username: string,
+    password: string,
+    token: string
+  ) => void;
   onSwitch: () => void;
   onForgotPassword: () => void;
 }
@@ -29,6 +36,7 @@ export default function LoginForm({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const captchaRef = useRef<ReCAPTCHA>(null);
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[linear-gradient(135deg,#163832_0%,#1f4d45_28%,#2d6a5f_58%,#3f8f7f_100%)] flex justify-center items-center p-4 px-14">
@@ -45,7 +53,15 @@ export default function LoginForm({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onLogin(username, password);
+
+          const token = captchaRef.current?.getValue();
+
+          if (!token) {
+            alert("Verifikasi captcha dulu");
+            return;
+          }
+
+          onLogin(username, password, token);
         }}
         className="relative z-10 w-full max-w-140"
       >
@@ -72,27 +88,15 @@ export default function LoginForm({
             Username
           </label>
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 z-10">
+              <User className="w-4 h-4"/>
             </div>
             <input
               type="text"
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full py-3.5 pl-8 pr-5 rounded-xl border border-white/10 bg-white/20 backdrop-blur-md text-white placeholder:text-white/60 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
+              className="w-full py-3.5 pl-12 pr-5 rounded-xl border border-white/10 bg-white/20 backdrop-blur-md text-white placeholder:text-white/60 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
             />
           </div>
         </div>
@@ -103,27 +107,15 @@ export default function LoginForm({
             Password
           </label>
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 z-10">
+              <Lock className="w-4 h-4" />
             </div>
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full py-3.5 pl-8 pr-12 rounded-xl border border-white/10 bg-white/20 backdrop-blur-md text-white placeholder:text-white/60 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
+              className="w-full py-3.5 pl-12 pr-12 rounded-xl border border-white/10 bg-white/20 backdrop-blur-md text-white placeholder:text-white/60 outline-none transition-all duration-300 focus:border-emerald-200/40 focus:bg-white/15 text-sm"
             />
             <button
               type="button"
@@ -178,6 +170,16 @@ export default function LoginForm({
           >
             Forgot Password?
           </button>
+        </div>
+        
+        <div className="mb-6 flex justify-center">
+          <div className="scale-110 origin-center">
+            <ReCAPTCHA
+              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+              ref={captchaRef}
+              theme="dark"
+            />
+          </div>
         </div>
 
         {/* BUTTON */}
