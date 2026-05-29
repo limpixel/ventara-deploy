@@ -4,6 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
+import { Bebas_Neue } from "next/font/google";
+
+const bebasNeue = Bebas_Neue({
+    weight: "400",
+    subsets: ["latin"],
+  });
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -53,11 +60,6 @@ export default function Sidebar() {
       pathname === href ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-600 hover:bg-gray-100"
     }`;
 
-  const adminLinkClass = (href: string) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-      pathname === href ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-gray-50"
-    }`;
-
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
       <div className="py-7 pl-7 mt-2 flex justify-start">
@@ -67,6 +69,8 @@ export default function Sidebar() {
       <nav className="flex-1 mt-14 px-6 space-y-3 font-semibold">
         {role === "user" && (
           <>
+            {/* SECTION LABEL */}
+          <div className={` ${bebasNeue.className} text-xl tracking-[0.3rem] font-semibold text-gray-400 uppercase px-2 pb-3 pt-4 mb-4`}>Menu</div>
             {/* Forecasting */}
             <Link href="/forecasting" className={linkClass("/forecasting")}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,24 +161,26 @@ export default function Sidebar() {
 
         {role === "admin" && (
           <>
+          {/* SECTION LABEL */}
+          <div className={` ${bebasNeue.className} text-xl tracking-[0.3rem] font-semibold text-gray-400 uppercase px-2 pb-3 pt-4 `}>Admin Menu</div>
             {/* Dashboard */}
-            <Link href="/admin/dashboard" className={adminLinkClass("/admin/dashboard")}>
+            <Link href="/admin/dashboard" className={linkClass("/admin/dashboard")}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Dashboard
             </Link>
 
-            {/* Resource Manager */}
-            <Link href="/admin/resources" className={adminLinkClass("/admin/resources")}>
+            {/* Manage Resource */}
+            <Link href="/admin/resources" className={linkClass("/admin/resources")}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
               </svg>
-              Resource Manager
+              Manage Resource
             </Link>
 
             {/* User Manager */}
-            <Link href="/admin/users" className={adminLinkClass("/admin/users")}>
+            <Link href="/admin/users" className={linkClass("/admin/users")}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>

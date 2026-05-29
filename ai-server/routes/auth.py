@@ -163,3 +163,13 @@ def update_profile():
         "name": user["name"],
         "email": user.get("email", ""),
     })
+    
+    # =========================
+# GET USERS
+# =========================
+@auth_bp.route("/users", methods=["GET"])
+def get_users():
+
+    users = load_users()
+
+    return jsonify(users)
