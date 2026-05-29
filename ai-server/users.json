@@ -1,15 +1,16 @@
 [
   {
-    "username": "admin",
-    "password": "admin123",
-    "role": "admin",
-    "name": "Administrator"
-  },
-  {
     "username": "kangkungkang",
     "email": "nail12@gmail.com",
     "password": "masukin123",
     "role": "user",
     "name": "nailajah69"
+  },
+  {
+    "username": "Ngangkang12",
+    "email": "angkang123@gmail.com",
+    "password": "ngangkangajah",
+    "role": "user",
+    "name": "Ngangkang12"
   }
 ]
