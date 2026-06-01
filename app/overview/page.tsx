@@ -33,6 +33,27 @@ export default function OverviewPage() {
   const actualData = [
     3, 4, 5, 6, 4, 5, 6, 7, 6, 5, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 4, 5, 6, 5,
   ];
+
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSaveHistory = async () => {
+    setSaving(true);
+    try {
+      const username = sessionStorage.getItem("ventara_username");
+      const res = await fetch("/api/save-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+      if (res.ok) setSaved(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const datasets = {
     GBR: actualData.map((v) => v + Math.random()),
     XGB: actualData.map((v) => v + Math.random()),

@@ -12,7 +12,7 @@ interface Props {
   onLogin: (
     username: string,
     password: string,
-    token: string
+    // token: string
   ) => void;
   onSwitch: () => void;
   onForgotPassword: () => void;
@@ -54,14 +54,14 @@ export default function LoginForm({
         onSubmit={(e) => {
           e.preventDefault();
 
-          const token = captchaRef.current?.getValue();
+          // const token = captchaRef.current?.getValue();
 
-          if (!token) {
-            alert("Verifikasi captcha dulu");
-            return;
-          }
+          // if (!token) {
+          //   alert("Verifikasi captcha dulu");
+          //   return;
+          // }
 
-          onLogin(username, password, token);
+          onLogin(username, password, );
         }}
         className="relative z-10 w-full max-w-140"
       >
@@ -171,7 +171,7 @@ export default function LoginForm({
             Forgot Password?
           </button>
         </div>
-        
+{/*         
         <div className="mb-6 flex justify-center">
           <div className="scale-110 origin-center">
             <ReCAPTCHA
@@ -180,7 +180,7 @@ export default function LoginForm({
               theme="dark"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* BUTTON */}
         <button

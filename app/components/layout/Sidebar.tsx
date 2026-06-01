@@ -25,9 +25,9 @@ export default function Sidebar() {
   const isMoreActive = pathname === "/history" || pathname === "/settings";
 
   useEffect(() => {
-    const savedRole = localStorage.getItem("ventara_role") as "user" | "admin" | null;
-    const savedName = localStorage.getItem("ventara_name");
-    const savedAvatar = localStorage.getItem("ventara_avatar"); // ← tambah
+    const savedRole = sessionStorage.getItem("ventara_role") as "user" | "admin" | null;
+    const savedName = sessionStorage.getItem("ventara_name");
+    const savedAvatar = sessionStorage.getItem("ventara_avatar"); // ← tambah
     if (savedRole) setRole(savedRole);
     if (savedName) setName(savedName);
     if (pathname === "/history" || pathname === "/settings") setOpen(true);
@@ -43,12 +43,18 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  function handleLogout() {
-    setProfileOpen(false);
-    localStorage.removeItem("ventara_role");
-    localStorage.removeItem("ventara_name");
-    router.push("/");
-  }
+  async function handleLogout() {
+  setProfileOpen(false);
+
+  await fetch("http://localhost:5000/logout", {
+    method: "POST",
+    credentials: "include",
+  });
+
+  sessionStorage.clear();
+
+  router.push("/");
+}
 
   const linkClass = (href: string) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${

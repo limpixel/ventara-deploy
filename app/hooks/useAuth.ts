@@ -13,7 +13,7 @@ export function useAuth() {
   const handleLogin = async (
   username: string,
   password: string,
-  token: string
+    // token: string
 ) => {
   try {
     const res = await fetch("http://localhost:5000/login", {
@@ -23,7 +23,7 @@ export function useAuth() {
       body: JSON.stringify({
         username,
         password,
-        token,
+        //  token,
       }),
     });
 
@@ -35,10 +35,11 @@ export function useAuth() {
       return;
     }
 
-    localStorage.setItem("ventara_role", data.role);
-    localStorage.setItem("ventara_name", data.name);
-    localStorage.setItem("ventara_username", data.username);
-    localStorage.setItem("ventara_email", data.email || "");
+    sessionStorage.setItem("ventara_role", data.role);
+    sessionStorage.setItem("ventara_name", data.name);
+    sessionStorage.setItem("ventara_username", data.username);
+    sessionStorage.setItem("ventara_email", data.email || "");
+    document.cookie = `ventara_username=${data.username}; path=/; SameSite=Lax`; // ← tambah ini
 
     router.push(
       data.role === "admin"

@@ -26,7 +26,8 @@ export function useMetrics() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/forecasting-data");
+        const username = sessionStorage.getItem("ventara_username") || "";
+        const res = await fetch(`/api/forecasting-data?username=${username}`);
         const json = await res.json();
         setData(json);
       } catch (e) {
@@ -35,7 +36,6 @@ export function useMetrics() {
         setLoading(false);
       }
     }
-
     fetchData();
   }, []);
 

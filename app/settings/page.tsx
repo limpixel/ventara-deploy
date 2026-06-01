@@ -22,9 +22,9 @@ export default function SettingsPage() {
   const [cacheCleared, setCacheCleared] = useState(false);
 
   useEffect(() => {
-    setName(localStorage.getItem("ventara_name") || "");
-    setEmail(localStorage.getItem("ventara_email") || "");
-    setAvatar(localStorage.getItem("ventara_avatar") || DEFAULT_AVATAR);
+    setName(sessionStorage.getItem("ventara_name") || "");
+    setEmail(sessionStorage.getItem("ventara_email") || "");
+    setAvatar(sessionStorage.getItem("ventara_avatar") || DEFAULT_AVATAR);
   }, []);
 
   async function handleClearCache() {

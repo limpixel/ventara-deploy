@@ -120,32 +120,6 @@ def upload_dataset():
         }), 422
 
     # =========================
-    # ARCHIVE DATASET LAMA
-    # =========================
-    current_path = get_active_dataset_path()
-
-    if (
-        current_path
-        and os.path.exists(current_path)
-        and current_path != DEFAULT_DATASET
-    ):
-
-        archive_name = (
-            f"archive_{int(time.time())}_"
-            f"{os.path.basename(current_path)}"
-        )
-
-        shutil.move(
-
-            current_path,
-
-            os.path.join(
-                ARCHIVE_FOLDER,
-                archive_name
-            )
-        )
-
-    # =========================
     # FINAL SAVE
     # =========================
     final_path = os.path.join(
@@ -158,7 +132,7 @@ def upload_dataset():
         final_path
     )
 
-    set_active_dataset_path(
+    set_active_dataset_path_for_user(
         final_path
     )
 
@@ -172,89 +146,52 @@ def upload_dataset():
     )
 
     if already_trained:
-
-        snap_dir = get_model_dir_for_hash(
-            file_hash
-        )
-
+        snap_dir = get_model_dir_for_hash(file_hash)
         registry = load_model_registry()
-
-        entry = registry[file_hash]
+        entry = registry.get(file_hash, {})
 
         if os.path.exists(snap_dir):
-
             for fname in os.listdir(snap_dir):
-
                 shutil.copy2(
-
-                    os.path.join(
-                        snap_dir,
-                        fname
-                    ),
-
-                    os.path.join(
-                        MODEL_FOLDER,
-                        fname
-                    )
+                    os.path.join(snap_dir, fname),
+                    os.path.join(MODEL_FOLDER, fname)
                 )
 
-        reload_all_globals(
-            final_path
-        )
+        set_active_dataset_path_for_user(final_path)
 
         return jsonify({
-
             "status": "skipped",
-
             "filename": filename,
-
-            "message":
-            "Dataset sudah pernah di-train",
-
-            "trained_at":
-            entry["trained_at"]
+            "message": "Dataset sudah pernah di-train",
+            "trained_at": entry.get("trained_at", "")
         })
-
+        
     # =========================
     # START TRAIN
     # =========================
     with train_lock:
-
         train_progress.update({
-
             "running": True,
-
             "step": "Memulai training...",
-
             "done": False,
-
             "error": None,
-
             "log": []
         })
 
     threading.Thread(
-
         target=worker_retrain,
-
         args=(
             final_path,
             train_progress,
             train_lock
         ),
-
         daemon=True
-
     ).start()
 
     return jsonify({
-
         "status": "started",
-
         "filename": filename,
-
-        "message":
-        "Training dimulai"
+        "message": "Training dimulai"
     })
     
 # =========================
@@ -312,7 +249,7 @@ def dataset_info():
 
         "filename":
             os.path.basename(
-                get_active_dataset_path()
+                get_active_dataset_path_for_user()
             ),
 
         "rows": 0,

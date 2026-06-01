@@ -1,9 +1,9 @@
 from flask import Flask, jsonify, request
 
-from dotenv import load_dotenv
-import os
+# from dotenv import load_dotenv
+# import os
 
-load_dotenv()
+# load_dotenv()
 
 from config import *
 from flask_cors import CORS
@@ -48,11 +48,18 @@ app = Flask(__name__)
 CORS(
     app,
     supports_credentials=True,
-    origins=["http://localhost:3000"]
+    origins=["http://localhost:3000"],
+    allow_headers=["Content-Type", "X-Username"],
+    methods=["GET", "POST", "OPTIONS"]
 )
+
 app.secret_key = SECRET_KEY
-app.config["SESSION_COOKIE_SAMESITE"] = "None"
-app.config["SESSION_COOKIE_SECURE"] = False
+
+app.config.update(
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_HTTPONLY=True,
+)
 
 # =========================
 # REGISTER BLUEPRINT

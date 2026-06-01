@@ -29,12 +29,37 @@ export default function ForecastingPage() {
 
   const [ nlpReport, setNlpReport] = useState("");
 
+  // 1. useEffect
   useEffect(() => {
-    const savedState = localStorage.getItem("ventara_ui_state") as "idle" | "loading" | "nlp" | null;
-    const savedReport = localStorage.getItem("ventara_nlp_report");
+    const username = sessionStorage.getItem("ventara_username");
+    const savedState = sessionStorage.getItem(`ventara_ui_state_${username}`) as "idle" | "loading" | "nlp" | null;
+    const savedReport = sessionStorage.getItem(`ventara_nlp_report_${username}`);
     if (savedState) setUiState(savedState);
     if (savedReport) setNlpReport(savedReport);
   }, []);
+
+  async (nlpReport: String) => {
+    const username = sessionStorage.getItem("ventara_username");
+
+    setGenerateMode(selectedModel as "general" | "best");
+    setUiState("nlp");
+    setNlpReport(nlpReport as string);
+
+    const newEntry = {
+      id: Date.now(),
+      waktu: new Date().toLocaleString("id-ID"),
+      file: dataset_name,
+      algo: selectedModel,
+      periode: "7 Hari",
+      hasil: [],
+      nlp_report: nlpReport,
+      status: "Selesai"
+    };
+
+
+    sessionStorage.setItem(`ventara_ui_state_${username}`, "nlp");
+    sessionStorage.setItem(`ventara_nlp_report_${username}`, nlpReport as string);
+  }
 
   return (
     <div className="flex h-screen">
@@ -69,10 +94,11 @@ export default function ForecastingPage() {
                 generateMode={generateMode} 
                 onUiStateChange={setUiState}
                 onReset={() => {
-                  setUiState("idle");
-                  setNlpReport("");
-                  localStorage.removeItem("ventara_ui_state");   // ← tambah
-                  localStorage.removeItem("ventara_nlp_report"); // ← tambah
+                const username = sessionStorage.getItem("ventara_username");
+                setUiState("idle");
+                setNlpReport("");
+                sessionStorage.removeItem(`ventara_ui_state_${username}`);
+                sessionStorage.removeItem(`ventara_nlp_report_${username}`);
               }}
               />
             </div>
@@ -163,16 +189,13 @@ export default function ForecastingPage() {
                   onClick={() =>
                     startGenerate(
                       selectedModel,
-                      async (nlpReport) => {
-                        await fetch("http://localhost:5000/generate_commit", {
-                          method: "POST",
-                          credentials: "include"
-                        });
+                      async (nlpReport: string) => {
+                        const username = sessionStorage.getItem("ventara_username");
+
                         setGenerateMode(selectedModel as "general" | "best");
                         setUiState("nlp");
                         setNlpReport(nlpReport);
 
-                        // ← tambah ini
                         const newEntry = {
                           id: Date.now(),
                           waktu: new Date().toLocaleString("id-ID"),
@@ -182,13 +205,9 @@ export default function ForecastingPage() {
                           nlp_report: nlpReport,
                           status: "Selesai"
                         };
-                        const existing = JSON.parse(localStorage.getItem("ventara_history") || "[]");
-                        existing.unshift(newEntry);
-                        localStorage.setItem("ventara_history", JSON.stringify(existing));
-                        // ← sampai sini
 
-                        localStorage.setItem("ventara_ui_state", "nlp");
-                        localStorage.setItem("ventara_nlp_report", nlpReport);
+                        sessionStorage.setItem(`ventara_ui_state_${username}`, "nlp");
+                        sessionStorage.setItem(`ventara_nlp_report_${username}`, nlpReport);
                       }
                     )
                   }

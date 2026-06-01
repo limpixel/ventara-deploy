@@ -20,10 +20,10 @@ export default function EditProfilePage() {
   const [saveMsg, setSaveMsg] = useState("");
 
   useEffect(() => {
-    setUsername(localStorage.getItem("ventara_username") || "");
-    setName(localStorage.getItem("ventara_name") || "");
-    setEmail(localStorage.getItem("ventara_email") || "");
-    setAvatar(localStorage.getItem("ventara_avatar") || DEFAULT_AVATAR);
+    setUsername(sessionStorage.getItem("ventara_username") || "");
+    setName(sessionStorage.getItem("ventara_name") || "");
+    setEmail(sessionStorage.getItem("ventara_email") || "");
+    setAvatar(sessionStorage.getItem("ventara_avatar") || DEFAULT_AVATAR);
   }, []);
 
   async function handleSave() {
@@ -41,8 +41,8 @@ export default function EditProfilePage() {
         setSaveMsg("❌ " + data.message);
         return;
       }
-      localStorage.setItem("ventara_name", data.name);
-      localStorage.setItem("ventara_email", data.email);
+      sessionStorage.setItem("ventara_name", data.name);
+      sessionStorage.setItem("ventara_email", data.email);
       setSaveMsg("✅ Profil berhasil disimpan!");
       setTimeout(() => router.push("/settings"), 1500);
     } catch {
@@ -60,7 +60,7 @@ export default function EditProfilePage() {
       const result = reader.result as string;
       setAvatar(result);
       setAvatarError(false);
-      localStorage.setItem("ventara_avatar", result);
+      sessionStorage.setItem("ventara_avatar", result);
     };
     reader.readAsDataURL(file);
   }

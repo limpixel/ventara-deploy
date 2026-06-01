@@ -43,20 +43,16 @@ export function useSaveHistory() {
       // =========================
       // HIT API DULU
       // =========================
-      await fetch(
-        "http://localhost:5000/save_history",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          credentials: "include",
-
-          body: JSON.stringify(newItem),
-        }
-      );
+      const username = sessionStorage.getItem("ventara_username");
+      await fetch("http://localhost:5000/save_history", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Username": username || "",
+        },
+        credentials: "include",
+        body: JSON.stringify({ entry: newItem }),
+      });
 
       toast.success(
         "Data berhasil disimpan ke historis"

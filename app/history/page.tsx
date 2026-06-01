@@ -48,36 +48,19 @@ export default function HistorisPage() {
   const [data, setData] = useState<HistorisItem[]>([]);         // ← tambah
   const [detailItem, setDetailItem] = useState<HistorisItem | null>(null); // ← tambah
 
-  // ← tambah ini
-  useEffect(() => {
-
+useEffect(() => {
   async function fetchHistory() {
-
     try {
-
-      const res = await fetch(
-        "http://localhost:5000/get_history",
-        {
-          credentials: "include",
-        }
-      );
-
+      const username = sessionStorage.getItem("ventara_username") || "";
+      const res = await fetch(`/api/get-history?username=${username}`);
       const json = await res.json();
-
-      setData(json);
-
+      setData(Array.isArray(json) ? json : []);
     } catch (error) {
-
-      console.error(
-        "Failed to fetch history:",
-        error
-      );
+      console.error("Failed to fetch history:", error);
     }
   }
-
   fetchHistory();
-
-}, []);
+}, []);;
 
   // ganti DUMMY_DATA jadi data
   const filtered = data.filter((d) => {
@@ -166,7 +149,7 @@ export default function HistorisPage() {
                       <td className="px-4 py-4 text-sm text-gray-600">{row.periode}</td>
                       <td className="px-4 py-4">
                         <div className="flex flex-col gap-0.5">
-                          {row.hasil.map((h, i) => (
+                          {(row.hasil ?? []).map((h, i) => (
                             <div key={i} className="flex items-center gap-2 text-xs">
                               <span className="text-gray-400 w-16">{h.label}</span>
                               <span className="font-semibold text-gray-700">{h.value}</span>

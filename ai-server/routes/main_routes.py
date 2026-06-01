@@ -7,7 +7,13 @@ import pandas as pd
 from config import *
 
 from utils.cache import *
-from utils.dataset import *
+from utils.dataset import (
+    get_active_dataset_path,
+    set_active_dataset_path,
+    get_active_dataset_path_for_user,      # ← tambah
+    set_active_dataset_path_for_user,      # ← tambah
+    allowed_file
+)
 
 from training.nlp import *
 
@@ -121,23 +127,38 @@ def overview():
 
         knn_data=knn_data
     )
+
 # =========================
-# Forecasting data
+# FORECASTING DATA
 # =========================
 @main_bp.route("/forecasting_data")
 def forecasting_data():
     from app import metrics, metrics_dl
+    from utils.user_helpers import load_user
+
+    username = request.headers.get("X-Username") or session.get("username")
+    print(f"🔍 USERNAME: {username}")  # ← tambah
 
     all_metrics = {**metrics, **metrics_dl}
     best_model_names = get_best_ml_and_dl(metrics, metrics_dl)
-    dataset_name = os.path.basename(get_active_dataset_path() or "")
+
+    dataset_name = ""
+    if username:
+        user = load_user(username)
+        print(f"🔍 USER DATASET: {user.get('active_dataset', '') if user else 'None'}")  # ← tambah
+        if user:
+            dataset_name = os.path.basename(user.get("active_dataset", ""))
+
+    if not dataset_name:
+        dataset_name = os.path.basename(get_active_dataset_path() or "")
+
+    print(f"🔍 DATASET NAME: {dataset_name}")  # ← tambah
 
     return jsonify({
         "dataset_name": dataset_name,
         "metrics": all_metrics,
         "best_models": best_model_names
     })
-
 # =========================
 # ANALITIK
 # =========================

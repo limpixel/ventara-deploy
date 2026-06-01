@@ -31,7 +31,14 @@ generate_bp = Blueprint(
 @generate_bp.route("/generate_progress")
 def get_progress():
     with progress_lock:
-        p = generate_progress.copy()
+        
+        username = session.get("username")
+
+        print("RAW COOKIE =", request.headers.get("Cookie"))
+        print("SESSION =", dict(session))
+        print("USERNAME =", session.get("username"))
+        
+        p = generate_progress.get(username, {})
     elapsed = time.time() - p["start_time"] if p.get("start_time") else 0
     day     = p.get("day", 0)
     total   = p.get("total", 7)
@@ -57,19 +64,27 @@ def get_progress():
 # =========================
 @generate_bp.route("/generate_commit", methods=["POST"])
 def generate_commit():
+
+    username = session.get("username")
+
     with progress_lock:
-        p = generate_progress.copy()
+        p = generate_progress.get(username, {})
+
     if p.get("done") and p.get("nlp_report"):
-        session["nlp_report"]         = p["nlp_report"]
+
+        session["nlp_report"] = p["nlp_report"]
         session["last_generate_mode"] = p.get("last_mode", "general")
+
         session.modified = True
+
         return jsonify({"status": "ok"})
+
     return jsonify({"status": "no_data"}), 400
 
 # =========================
 # BACKGROUND WORKER — GENERATE FULL
 # =========================
-def _worker_generate_full(selected_model: str, active_models: list, output_mode: str = "general") -> None:
+def _worker_generate_full(username: str, selected_model: str, active_models: list, output_mode: str = "general") -> None:
     from app import (
     df,
     X,
@@ -145,7 +160,7 @@ def _worker_generate_full(selected_model: str, active_models: list, output_mode:
         for i in range(future_steps):
             if i % 24 == 0:
                 with progress_lock:
-                    generate_progress["day"] = (i // 24) + 1
+                    generate_progress[username]["day"] = (i // 24) + 1
                 print(f"⏳ Day {(i//24)+1}/7")
 
             next_time = last_time + pd.Timedelta(hours=i + 1)
@@ -239,7 +254,11 @@ def _worker_generate_full(selected_model: str, active_models: list, output_mode:
             df_out[col] = df_out[col].astype(str).str.replace(".", ",", regex=False)
 
         # ⬅️ BERUBAH: pakai output_mode buat nentuin nama file
-        filename    = "hasil_prediksi_best.csv" if output_mode == "best" else "hasil_prediksi_general.csv"
+        filename = (
+            f"{username}_hasil_prediksi_best.csv"
+            if output_mode == "best"
+            else f"{username}_hasil_prediksi_general.csv"
+        )
         output_path = os.path.join(OUTPUT_FOLDER, filename)
         
         with open(output_path, "w", encoding="utf-8-sig", newline="") as f:
@@ -249,7 +268,7 @@ def _worker_generate_full(selected_model: str, active_models: list, output_mode:
             df_out.to_csv(f, index=False, sep=";")
 
         with progress_lock:
-            generate_progress.update({
+            generate_progress[username].update({
                 "running": False, "done": True,
                 "nlp_report": nlp_report,
                 "last_mode": output_mode,  # ⬅️ BERUBAH: pakai output_mode
@@ -259,14 +278,14 @@ def _worker_generate_full(selected_model: str, active_models: list, output_mode:
     except Exception as e:
         print(f"❌ Worker error: {traceback.format_exc()}")
         with progress_lock:
-            generate_progress.update({
+            generate_progress[username].update({
                 "running": False, "done": True, "nlp_report": None, "error": str(e)
             })
 
 # =========================
 # BACKGROUND WORKER — GENERATE BEST
 # =========================
-def _worker_generate_best() -> None:
+def _worker_generate_best(username: str) -> None:
     from app import (
         df,
         X,
@@ -333,7 +352,7 @@ def _worker_generate_best() -> None:
         for i in range(future_steps):
             if i % 24 == 0:
                 with progress_lock:
-                    generate_progress["day"] = (i // 24) + 1
+                    generate_progress[username]["day"] = (i // 24) + 1
                 print(f"⏳ Day {(i//24)+1}/7")
 
             next_time = last_time + pd.Timedelta(hours=i + 1)
@@ -404,7 +423,10 @@ def _worker_generate_best() -> None:
             df_out[col] = df_out[col].round(3)
             df_out[col] = df_out[col].astype(str).str.replace(".", ",", regex=False)
 
-        output_path = os.path.join(OUTPUT_FOLDER, "hasil_prediksi_best.csv")
+        output_path = os.path.join(
+            OUTPUT_FOLDER,
+            f"{username}_hasil_prediksi_best.csv"
+        )
         with open(output_path, "w", encoding="utf-8-sig", newline="") as f:
             f.write("-BEGIN HEADER-\n")
             f.write(f"Dataset: {os.path.basename(get_active_dataset_path())}\n")
@@ -413,7 +435,7 @@ def _worker_generate_best() -> None:
             df_out.to_csv(f, index=False, sep=";")
 
         with progress_lock:
-            generate_progress.update({
+            generate_progress[username].update({
                 "running": False, "done": True,
                 "nlp_report": nlp_report, "last_mode": "best", "error": None
             })
@@ -421,7 +443,7 @@ def _worker_generate_best() -> None:
     except Exception as e:
         print(f"❌ Worker Best error: {traceback.format_exc()}")
         with progress_lock:
-            generate_progress.update({
+            generate_progress[username].update({
                 "running": False, "done": True, "nlp_report": None, "error": str(e)
             })
 
@@ -440,9 +462,11 @@ def generate_full():
         DL_INPUT_COLS
     )
 
+    username = session.get("username")
+    
     with progress_lock:
 
-        if generate_progress.get("running"):
+        if generate_progress.get(username, {}).get("running"):
 
             return jsonify({
 
@@ -450,7 +474,7 @@ def generate_full():
 
             }), 409
 
-        generate_progress.update({
+        generate_progress[username] = {
 
             "running": True,
             "done": False,
@@ -460,7 +484,7 @@ def generate_full():
             "error": None,
             "nlp_report": None
 
-        })
+        }
 
     selected_model = request.form.get(
         "model",
@@ -480,6 +504,7 @@ def generate_full():
         target=_worker_generate_full,
 
         args=(
+            username,
             selected_model,
             active_models
         ),
@@ -499,17 +524,18 @@ def generate_full():
 # =========================
 @generate_bp.route("/generate_best", methods=["POST"])
 def generate_best():
+    username = session.get("username")
     with progress_lock:
-        if generate_progress.get("running"):
+        if generate_progress.get(username, {}).get("running"):
             return jsonify({"status": "already_running"}), 409
 
-        generate_progress.update({
+        generate_progress[username] = {
             "running": True, "done": False,
             "day": 0, "total": 7,
             "mode": "Best Stacking",
             "start_time": time.time(),
             "error": None, "nlp_report": None
-        })
+        }
 
     from app import metrics, metrics_dl
     best_models = get_best_ml_and_dl(metrics, metrics_dl)
@@ -519,6 +545,7 @@ def generate_best():
 
     threading.Thread(
         target=_worker_generate_best,
+        args=(username,),
         daemon=True
     ).start()
 
@@ -530,11 +557,13 @@ def generate_best():
 @generate_bp.route("/download_full/<mode>")
 def download_full(mode):
     from config import OUTPUT_FOLDER
+    
+    username = session.get("username")
 
     filename = (
-        "hasil_prediksi_best.csv"
+        f"{username}_hasil_prediksi_best.csv"
         if mode == "best"
-        else "hasil_prediksi_general.csv"
+        else f"{username}_hasil_prediksi_general.csv"
     )
     filepath = os.path.join(OUTPUT_FOLDER, filename)
     
