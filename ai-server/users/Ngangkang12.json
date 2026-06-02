@@ -23,15 +23,6 @@
       "periode": "7 Hari",
       "nlp_report": "Prediksi kecepatan angin untuk periode 01-01-2023 hingga 08-01-2023 menunjukkan rata-rata 4.60 m/s, termasuk kategori angin sedang. Kecepatan tertinggi mencapai 7.41 m/s dan terendah 3.06 m/s, dengan standar deviasi 0.79 m/s. Angin cenderung paling kuat sekitar pukul 06:00 dan paling lemah sekitar pukul 22:00. Secara umum tren angin menurun menuju akhir periode. \n\nModel terbaik adalah XGB-LSTM Stacking dengan MAPE 7.95% dan RMSE 0.377. Tingkat akurasi model tergolong tinggi.",
       "status": "Selesai"
-    },
-    {
-      "id": 1780229733596,
-      "waktu": "31/5/2026, 19.15.33",
-      "file": "NASA_Sukabumi_Hourly.csv",
-      "algo": "all",
-      "periode": "7 Hari",
-      "nlp_report": "Prediksi kecepatan angin untuk periode 01-01-2023 hingga 08-01-2023 menunjukkan rata-rata 6.77 m/s, termasuk kategori angin segar. Kecepatan tertinggi mencapai 6.85 m/s dan terendah 6.75 m/s, dengan standar deviasi 0.01 m/s. Angin cenderung paling kuat sekitar pukul 12:00 dan paling lemah sekitar pukul 00:00. Secara umum tren angin relatif stabil sepanjang periode. \n\nModel terbaik adalah XGB dengan MAPE 1.95% dan RMSE 0.081. Tingkat akurasi model tergolong tinggi.",
-      "status": "Selesai"
     }
   ]
 }

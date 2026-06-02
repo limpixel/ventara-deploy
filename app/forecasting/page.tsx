@@ -61,6 +61,9 @@ export default function ForecastingPage() {
     sessionStorage.setItem(`ventara_nlp_report_${username}`, nlpReport as string);
   }
 
+  const ALL_VARS = ["T2M", "WS10M", "WD10M"];
+  const [selectedVars, setSelectedVars] = useState("WS10M");
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -140,11 +143,33 @@ export default function ForecastingPage() {
                       onChange={() => setSelectedModel("all")}
                       className="hidden peer"
                     />
+                     <span className="block px-5 py-2.5 rounded-xl font-medium border-2 text-sm transition-all select-none peer-checked:bg-teal-50 peer-checked:border-teal-400 peer-checked:text-teal-700 bg-gray-100 border-gray-200 text-gray-700 hover:border-teal-200">
+                    General
+                  </span>
+                </label>
 
-                    <span className="block px-5 py-2.5 rounded-xl font-medium border-2 text-sm transition-all select-none peer-checked:bg-teal-50 peer-checked:border-teal-400 peer-checked:text-teal-700 bg-gray-100 border-gray-200 text-gray-700 hover:border-teal-200">
-                      General
-                    </span>
-                  </label>
+                  {/* VARIABEL — muncul inline setelah General */}
+                  <div className={`flex items-center gap-2 overflow-hidden transition-all duration-600 ease-in-out ${
+                    selectedModel === "all" ? "max-w-xs opacity-100" : "max-w-0 opacity-0"
+                  }`}>
+                    <span className="text-xs text-gray-400 whitespace-nowrap">|</span>
+                    {ALL_VARS.map((v) => {
+                      const isSelected = selectedVars === v;
+                      return (
+                        <button
+                          key={v}
+                          onClick={() => setSelectedVars(v)}
+                          className={`px-3 py-2 rounded-xl text-xs font-medium border-2 transition-all select-none whitespace-nowrap ${
+                            isSelected
+                              ? "bg-teal-50 border-teal-400 text-teal-700"
+                              : "bg-gray-100 border-gray-200 text-gray-500 hover:border-teal-200"
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      );
+                    })}
+                  </div>
 
                   {/* BEST */}
                   <label className="cursor-pointer">
@@ -156,14 +181,9 @@ export default function ForecastingPage() {
                       onChange={() => setSelectedModel("best")}
                       className="hidden peer"
                     />
-
                     <span className="block px-5 py-2.5 rounded-xl font-medium border-2 text-sm transition-all select-none bg-gray-100 border-gray-200 text-gray-700 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 peer-checked:bg-amber-50 peer-checked:border-amber-400 peer-checked:text-amber-700">
                       <span className="flex items-center gap-1.5">
-                        <svg
-                          className="w-3.5 h-3.5 text-amber-500"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
+                        <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                         Best 2 Model

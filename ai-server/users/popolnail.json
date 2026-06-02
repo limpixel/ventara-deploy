@@ -1,11 +1,45 @@
 {
   "username": "popolnail",
   "email": "popolnail@gmail.com",
-  "password": "naildramok123",
+  "password": "nailjmk48",
   "role": "user",
   "name": "popolnail",
-  "active_dataset": "C:\\xampp\\htdocs\\pltb-brin\\ai-server\\uploads\\NASA_Baron_Hourly.csv",
+  "active_dataset": "C:\\xampp\\htdocs\\pltb-brin\\ai-server\\uploads\\NASA_Pandeglang_Hourly.csv",
   "history": [
+    {
+      "entry": {
+        "id": 1780321088128,
+        "waktu": "1/6/2026, 20.38.08",
+        "file": "NASA_Pandeglang_Hourly.csv",
+        "algo": "XGB-LSTM",
+        "periode": "1 Jam",
+        "hasil": [
+          {
+            "label": "BiLSTM:",
+            "value": "14.30 MW"
+          }
+        ],
+        "status": "Selesai",
+        "nlp_report": "Prediksi kecepatan angin untuk periode 01-01-2023 hingga 08-01-2023 menunjukkan rata-rata 4.20 m/s, termasuk kategori angin sedang. Kecepatan tertinggi mencapai 8.18 m/s dan terendah 0.72 m/s, dengan standar deviasi 2.18 m/s. Angin cenderung paling kuat sekitar pukul 07:00 dan paling lemah sekitar pukul 15:00. Secara umum tren angin menurun menuju akhir periode. \n\nModel terbaik adalah XGB-LSTM Stacking dengan MAPE 6.79% dan RMSE 0.226. Tingkat akurasi model tergolong tinggi."
+      }
+    },
+    {
+      "entry": {
+        "id": 1780320917891,
+        "waktu": "1/6/2026, 20.35.17",
+        "file": "NASA_Pandeglang_Hourly.csv",
+        "algo": "XGB-LSTM",
+        "periode": "1 Jam",
+        "hasil": [
+          {
+            "label": "BiLSTM:",
+            "value": "14.30 MW"
+          }
+        ],
+        "status": "Selesai",
+        "nlp_report": "Prediksi kecepatan angin untuk periode 01-01-2023 hingga 08-01-2023 menunjukkan rata-rata 4.20 m/s, termasuk kategori angin sedang. Kecepatan tertinggi mencapai 8.18 m/s dan terendah 0.72 m/s, dengan standar deviasi 2.18 m/s. Angin cenderung paling kuat sekitar pukul 07:00 dan paling lemah sekitar pukul 15:00. Secara umum tren angin menurun menuju akhir periode. \n\nModel terbaik adalah XGB-LSTM Stacking dengan MAPE 6.79% dan RMSE 0.226. Tingkat akurasi model tergolong tinggi."
+      }
+    },
     {
       "id": 1780308428118,
       "waktu": "1/6/2026, 17.07.08",
@@ -35,15 +69,6 @@
       ],
       "status": "Selesai",
       "nlp_report": "Prediksi kecepatan angin untuk periode 01-01-2023 hingga 08-01-2023 menunjukkan rata-rata 6.90 m/s, termasuk kategori angin segar. Kecepatan tertinggi mencapai 7.66 m/s dan terendah 6.69 m/s, dengan standar deviasi 0.24 m/s. Angin cenderung paling kuat sekitar pukul 08:00 dan paling lemah sekitar pukul 05:00. Secara umum tren angin menurun menuju akhir periode. \n\nModel terbaik adalah XGB dengan MAPE 2.18% dan RMSE 0.085. Tingkat akurasi model tergolong tinggi."
-    },
-    {
-      "id": 1780229023417,
-      "waktu": "31/5/2026, 19.03.43",
-      "file": "NASA_Baron_Hourly.csv",
-      "algo": "all",
-      "periode": "7 Hari",
-      "nlp_report": "Prediksi kecepatan angin untuk periode 01-01-2023 hingga 08-01-2023 menunjukkan rata-rata 6.77 m/s, termasuk kategori angin segar. Kecepatan tertinggi mencapai 6.85 m/s dan terendah 6.75 m/s, dengan standar deviasi 0.01 m/s. Angin cenderung paling kuat sekitar pukul 12:00 dan paling lemah sekitar pukul 00:00. Secara umum tren angin relatif stabil sepanjang periode. \n\nModel terbaik adalah XGB dengan MAPE 1.95% dan RMSE 0.081. Tingkat akurasi model tergolong tinggi.",
-      "status": "Selesai"
     },
     {
       "id": 1780228636231,

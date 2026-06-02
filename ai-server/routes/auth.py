@@ -191,8 +191,8 @@ def update_profile():
     new_name  = data.get("name", "").strip()
     new_email = data.get("email", "").strip()
 
-    if not verify_recaptcha(token):
-        return jsonify({"success": False, "message": "Captcha verification failed."}), 400
+    # if not verify_recaptcha(token):
+    #     return jsonify({"success": False, "message": "Captcha verification failed."}), 400
 
     if not username:
         return jsonify({"success": False, "message": "Username required."}), 400
@@ -217,6 +217,30 @@ def update_profile():
         "email":   user.get("email", ""),
     })
 
+# =========================
+# CHANGE PASSWORD (user only)
+# =========================
+@auth_bp.route("/change_password", methods=["POST"])
+def change_password():
+    data = request.get_json()
+    username = data.get("username", "").strip()
+    current_password = data.get("current_password", "").strip()
+    new_password = data.get("new_password", "").strip()
+
+    if not username or not current_password or not new_password:
+        return jsonify({"success": False, "message": "All fields required."}), 400
+
+    user = load_user(username)
+    if not user:
+        return jsonify({"success": False, "message": "User not found."}), 404
+
+    if user["password"] != current_password:
+        return jsonify({"success": False, "message": "Password saat ini salah."}), 401
+
+    user["password"] = new_password
+    save_user(user)
+
+    return jsonify({"success": True, "message": "Password berhasil diubah."})
 
 # =========================
 # GET USERS (user biasa aja)
@@ -234,44 +258,3 @@ def get_users():
 @auth_bp.route("/admins", methods=["GET"])
 def get_admins():
     return jsonify(load_admins())
-
-
-# =========================
-# SAVE HISTORY
-# =========================
-@auth_bp.route("/save_history", methods=["POST"])
-def save_history():
-    username = request.headers.get("X-Username") or session.get("username")  # ← ganti
-    if not username:
-        return jsonify({"success": False, "message": "Not logged in."}), 401
-
-    data = request.get_json()
-    entry = data.get("entry")
-    if not entry:
-        return jsonify({"success": False, "message": "No entry provided."}), 400
-
-    user = load_user(username)
-    if not user:
-        return jsonify({"success": False, "message": "User not found."}), 404
-
-    if "history" not in user:
-        user["history"] = []
-
-    user["history"].insert(0, entry)
-    save_user(user)
-
-    return jsonify({"success": True})
-
-
-# =========================
-# GET HISTORY
-# =========================
-@auth_bp.route("/history", methods=["GET"])
-def get_history():
-    username = request.headers.get("X-Username") or session.get("username")
-    if not username:
-        return jsonify([]), 401
-    user = load_user(username)
-    if not user:
-        return jsonify([]), 404
-    return jsonify(user.get("history", []))
