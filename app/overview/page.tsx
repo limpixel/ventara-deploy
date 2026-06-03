@@ -17,6 +17,14 @@ export default function OverviewPage() {
   const { dataset_name } = useMetrics();
 
   useEffect(() => {
+    const username = sessionStorage.getItem("ventara_username");
+
+    // cek sessionStorage dulu (dari history page)
+    const savedReport = sessionStorage.getItem(`ventara_nlp_report_${username}`);
+    const savedMode = sessionStorage.getItem(`ventara_generate_mode_${username}`);
+    if (savedReport) setNlpReport(savedReport);
+    if (savedMode) setGenerateMode(savedMode as "general" | "best");
+
     fetch("http://localhost:5000/overview_data", {
       credentials: "include",
     })

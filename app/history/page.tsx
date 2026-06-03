@@ -241,7 +241,13 @@ useEffect(() => {
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => setDetailItem(row)}
+                            onClick={() => {
+                                const username = sessionStorage.getItem("ventara_username");
+                                sessionStorage.setItem(`ventara_ui_state_${username}`, "nlp");
+                                sessionStorage.setItem(`ventara_nlp_report_${username}`, row.nlp_report || "");
+                                sessionStorage.setItem(`ventara_generate_mode_${username}`, row.algo.includes("BiLSTM") || row.algo.includes("LSTM") ? "best" : "general");
+                                window.location.href = "/overview";
+                              }} 
                             className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
                             title="Lihat detail"
                           >

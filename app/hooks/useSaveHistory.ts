@@ -11,6 +11,7 @@ interface SaveHistoryPayload {
     value: string;
   }[];
   nlp_report: string;
+  onStorageFull?: () => void;  // ← callback
 }
 
 export function useSaveHistory() {
@@ -21,30 +22,23 @@ export function useSaveHistory() {
     periode,
     hasil,
     nlp_report,
+    onStorageFull,
   }: SaveHistoryPayload) => {
 
     try {
-
       const newItem = {
         id: Date.now(),
-
         waktu: new Date().toLocaleString("id-ID"),
-
         file,
         algo,
         periode,
         hasil,
-
         status: "Selesai",
-
         nlp_report,
       };
 
-      // =========================
-      // HIT API DULU
-      // =========================
       const username = sessionStorage.getItem("ventara_username");
-      await fetch("http://localhost:5000/save_history", {
+      const res = await fetch("http://localhost:5000/save_history", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,21 +48,25 @@ export function useSaveHistory() {
         body: JSON.stringify({ entry: newItem }),
       });
 
-      toast.success(
-        "Data berhasil disimpan ke historis"
-      );
+      const json = await res.json();
+
+      if (res.status === 403 && json.storage_full) {
+        toast.error("Storage penuh! Upgrade tier untuk menyimpan lebih banyak.");
+        onStorageFull?.();  // ← trigger modal
+        return;
+      }
+
+      if (json.success) {
+        toast.success("Data berhasil disimpan ke historis");
+      } else {
+        toast.error(json.message || "Gagal menyimpan.");
+      }
 
     } catch (error) {
-
       console.error(error);
-
-      toast.error(
-        "Gagal menyimpan data historis"
-      );
+      toast.error("Gagal menyimpan data historis");
     }
   };
 
-  return {
-    saveHistory,
-  };
+  return { saveHistory };
 }
