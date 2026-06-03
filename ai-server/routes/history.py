@@ -23,10 +23,11 @@ def get_history_usage_bytes(user: dict) -> int:
 
 # =========================
 # SAVE HISTORY
-# =========================
+#=========================
 @history_bp.route("/save_history", methods=["POST"])
 def save_history():
     from utils.user_helpers import load_user, save_user
+    from config import UPLOAD_FOLDER
 
     username = get_username()
     if not username:
@@ -42,7 +43,29 @@ def save_history():
 
     tier = user.get("storage_tier", "gratis")
     limit = TIER_LIMITS.get(tier, TIER_LIMITS["gratis"])
-    current_usage = get_history_usage_bytes(user)
+
+    # hitung usage sama persis dengan storage_info
+    history_size = get_history_usage_bytes(user)
+
+    csv_paths = set()
+    for item in user.get("history", []):
+        entry = item.get("entry", item)
+        file_name = entry.get("file", "")
+        if file_name:
+            candidate = os.path.join(UPLOAD_FOLDER, file_name)
+            if os.path.exists(candidate):
+                csv_paths.add(candidate)
+
+    # tambah CSV dari entry baru
+    new_entry = data.get("entry", data)
+    new_file = new_entry.get("file", "")
+    if new_file:
+        candidate = os.path.join(UPLOAD_FOLDER, new_file)
+        if os.path.exists(candidate) and candidate not in csv_paths:
+            csv_paths.add(candidate)
+
+    csv_size = sum(os.path.getsize(p) for p in csv_paths)
+    current_usage = history_size + csv_size
     new_entry_size = len(json.dumps(data).encode("utf-8"))
 
     if current_usage + new_entry_size > limit:
