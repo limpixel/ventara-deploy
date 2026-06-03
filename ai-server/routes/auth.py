@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify, session
 import json
 import os
+import datetime
 from utils.recaptcha import verify_recaptcha
 from utils.progress import generate_progress
 from utils.user_helpers import load_user, save_user, user_path
+from utils.login_counter import increment_login_count, get_login_count
 
 auth_bp = Blueprint("auth_bp", __name__)
 
@@ -144,6 +146,25 @@ def login():
     if not found:
         return jsonify({"success": False, "message": "Wrong username or password."}), 401
 
+    # catat lastLogin
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    if found["role"] == "admin":
+        admins = load_admins()
+        for a in admins:
+            if a["username"] == found["username"]:
+                a["lastLogin"] = now
+                break
+        with open(ADMINS_FILE, "w") as f:
+            json.dump(admins, f, indent=2)
+    elif found["role"] == "user":
+        user_data = load_user(found["username"])
+        if user_data:
+            user_data["lastLogin"] = now
+            save_user(user_data)
+
+    # increment login count
+    increment_login_count()
+
     # hapus session lama
     session.clear()
 
@@ -169,6 +190,23 @@ def logout():
     print("BEFORE LOGOUT =", generate_progress)
 
     username = session.get("username")
+
+    # catat lastLogout
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    role = session.get("role")
+    if role == "admin":
+        admins = load_admins()
+        for a in admins:
+            if a["username"] == username:
+                a["lastLogout"] = now
+                break
+        with open(ADMINS_FILE, "w") as f:
+            json.dump(admins, f, indent=2)
+    elif role == "user":
+        user_data = load_user(username)
+        if user_data:
+            user_data["lastLogout"] = now
+            save_user(user_data)
 
     if username in generate_progress:
         del generate_progress[username]
@@ -225,6 +263,15 @@ def update_profile():
 @auth_bp.route("/users", methods=["GET"])
 def get_users():
     return jsonify(load_all_users())
+
+
+# =========================
+# GET LOGIN COUNT HARI INI
+# =========================
+
+@auth_bp.route("/login-count", methods=["GET"])
+def login_count():
+    return jsonify({"count": get_login_count()})
 
 
 # =========================

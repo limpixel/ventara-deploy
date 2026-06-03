@@ -33,5 +33,7 @@
       "nlp_report": "Prediksi kecepatan angin untuk periode 01-01-2023 hingga 08-01-2023 menunjukkan rata-rata 6.77 m/s, termasuk kategori angin segar. Kecepatan tertinggi mencapai 6.85 m/s dan terendah 6.75 m/s, dengan standar deviasi 0.01 m/s. Angin cenderung paling kuat sekitar pukul 12:00 dan paling lemah sekitar pukul 00:00. Secara umum tren angin relatif stabil sepanjang periode. \n\nModel terbaik adalah XGB dengan MAPE 1.95% dan RMSE 0.081. Tingkat akurasi model tergolong tinggi.",
       "status": "Selesai"
     }
-  ]
+  ],
+  "lastLogin": "2026-06-01T12:47:16.416803+00:00",
+  "lastLogout": "2026-06-01T12:47:26.943791+00:00"
 }

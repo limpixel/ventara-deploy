@@ -46,10 +46,12 @@ export default function Sidebar() {
   async function handleLogout() {
   setProfileOpen(false);
 
-  await fetch("http://localhost:5000/logout", {
-    method: "POST",
-    credentials: "include",
-  });
+  try {
+    await fetch("http://localhost:5000/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (_) {}
 
   sessionStorage.clear();
 

@@ -2,6 +2,7 @@
 
 import { User, ResourceLimit, UserResourceLimit } from '../../types/admin.types';
 import { ResourceCard } from './ResourceCard';
+import { SearchableSelect } from './SearchableSelect';
 
 interface ResourceTabProps {
   resourceLimits: ResourceLimit[];
@@ -45,23 +46,16 @@ export const ResourceTab = ({
       </div>
 
       {/* User Select for Custom Limit */}
-      {!selectedUserForEdit && (
-        <div className="mb-4 text-gray-400">
-          <select 
-            onChange={(e) => {
-              const user = users.find(u => u.id === e.target.value);
-              if (user) onSelectUser(user);
-            }}
-            className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm"
-            defaultValue=""
-          >
-            <option value="" disabled>-- Pilih user untuk custom limit --</option>
-            {users.filter(u => u.isActive).map(user => (
-              <option key={user.id} value={user.id}>{user.username}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="text-gray-400">
+        <SearchableSelect
+          users={users}
+          selectedUser={selectedUserForEdit}
+          onSelect={(user) => {
+            if (user) onSelectUser(user);
+            else onFinishEditing();
+          }}
+        />
+      </div>
 
       {/* Resource Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

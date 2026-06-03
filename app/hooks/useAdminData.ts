@@ -15,6 +15,57 @@ import {
   getTodayKey
 } from '@/app/services/adminHelpers';
 
+const getSampleUsageLogs = (): UsageLog[] => {
+  const logs: UsageLog[] = [];
+  const users = ['Administrator', 'kakang_kukung', 'joko_wind'];
+  const features = [
+    { id: 'forecast', name: 'Forecasting / Prediksi' },
+    { id: 'analitik', name: 'Report Analytics' },
+    { id: 'trends', name: 'Trends Reports' },
+    { id: 'export', name: 'Export Data' },
+  ];
+  const locations = ['Jakarta', 'Bawean', 'Surabaya', 'Bandung', 'Semarang'];
+  let id = 1;
+
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+
+  const dailyCounts = [3, 5, 2, 7, 4, 6, 1];
+
+  for (let d = 0; d < 7; d++) {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + d);
+    const count = dailyCounts[d];
+
+    for (let i = 0; i < count; i++) {
+      const hour = 7 + Math.floor(Math.random() * 12);
+      const minute = Math.floor(Math.random() * 60);
+      date.setHours(hour, minute, 0, 0);
+
+      const user = users[Math.floor(Math.random() * users.length)];
+      const feature = features[Math.floor(Math.random() * features.length)];
+      const location = locations[Math.floor(Math.random() * locations.length)];
+
+      logs.push({
+        id: String(id++),
+        userId: String((users.indexOf(user) + 1)),
+        username: user,
+        featureId: feature.id,
+        featureName: feature.name,
+        location,
+        timestamp: date.toISOString(),
+      });
+    }
+  }
+
+  return logs.sort((a, b) =>
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+};
+
 export const useAdminData = () => {
 
   const [users, setUsers] = useState<User[]>([]);
@@ -32,10 +83,15 @@ export const useAdminData = () => {
     useState<DashboardStats>({
       totalUsers: 0,
       activeUsersToday: 0,
+      totalUsersToday: 0,
       totalUsageToday: 0,
       topLocations: [],
       recentActivities: [],
+      activeUsers: [],
+      weeklyUsage: [],
     });
+
+  const [loginCountToday, setLoginCountToday] = useState(0);
 
   // =========================
 // LOAD USERS FROM FLASK
@@ -66,6 +122,12 @@ useEffect(() => {
           lastActive:
             u.lastActive || "",
 
+          lastLogin:
+            u.lastLogin || "",
+
+          lastLogout:
+            u.lastLogout || "",
+
           usageCount:
             u.usageCount || 0,
 
@@ -80,15 +142,28 @@ useEffect(() => {
 
     } catch (err) {
 
-      console.error(
-        'Failed load users',
-        err
-      );
+      // silent — server mungkin sibuk
 
     }
   };
 
+  const fetchLoginCount = async () => {
+    try {
+      const res = await fetch(
+        'http://localhost:5000/login-count'
+      );
+      const data = await res.json();
+      setLoginCountToday(data.count);
+    } catch (_) {}
+  };
+
   fetchUsers();
+  fetchLoginCount();
+  const interval = setInterval(() => {
+    fetchUsers();
+    fetchLoginCount();
+  }, 5000);
+  return () => clearInterval(interval);
 
 }, []);
   // =========================
@@ -129,6 +204,8 @@ useEffect(() => {
         JSON.parse(storedLogs)
       );
 
+    } else {
+      setUsageLogs(getSampleUsageLogs());
     }
 
   }, []);
@@ -149,6 +226,16 @@ useEffect(() => {
       new Set(
         todayLogs.map(log => log.userId)
       ).size;
+
+    const usersToday =
+      users.filter(u =>
+        u.lastLogin && u.lastLogin.startsWith(today)
+      );
+
+    const activeUsers =
+      usersToday.filter(u =>
+        !u.lastLogout || u.lastLogin > u.lastLogout
+      );
 
     const locationMap =
       new Map<string, number>();
@@ -171,16 +258,54 @@ useEffect(() => {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
+    // Weekly usage (Senin - Minggu)
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    const weeklyLogs = usageLogs.filter(log => {
+      const t = new Date(log.timestamp);
+      return t >= monday && t <= sunday;
+    });
+
+    const dayCountMap = new Map<string, number>();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      dayCountMap.set(d.toISOString().split('T')[0], 0);
+    }
+
+    weeklyLogs.forEach(log => {
+      const dateKey = log.timestamp.split('T')[0];
+      if (dayCountMap.has(dateKey)) {
+        dayCountMap.set(dateKey, (dayCountMap.get(dateKey) ?? 0) + 1);
+      }
+    });
+
+    const weeklyUsage = Array.from(dayCountMap.entries()).map(([dateKey, count]) => {
+      const d = new Date(dateKey);
+      return { day: dayNames[d.getDay()], count };
+    });
+
     setDashboardStats({
       totalUsers: users.length,
       activeUsersToday,
-      totalUsageToday: todayLogs.length,
+      totalUsersToday: usersToday.length,
+      totalUsageToday: todayLogs.length + loginCountToday,
       topLocations,
       recentActivities:
         usageLogs.slice(-10).reverse(),
+      activeUsers,
+      weeklyUsage,
     });
 
-  }, [users, usageLogs]);
+  }, [users, usageLogs, loginCountToday]);
 
 const updateResourceLimit = (
   id: string,

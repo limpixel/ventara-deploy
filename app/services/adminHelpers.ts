@@ -63,6 +63,8 @@ export const syncUsersFromAuth = (): User[] => {
         email: parsedAuthUser.email,
         registeredAt: parsedAuthUser.registeredAt || new Date().toISOString(),
         lastActive: new Date().toISOString(),
+        lastLogin: '',
+        lastLogout: '',
         usageCount: 0,
         location: 'Unknown',
         isActive: true,
@@ -82,6 +84,8 @@ export const getSampleUsers = (): User[] => [
     email: 'admin@ventara.id', 
     registeredAt: new Date().toISOString(), 
     lastActive: new Date().toISOString(), 
+    lastLogin: new Date().toISOString(),
+    lastLogout: '',
     usageCount: 45, 
     location: 'Jakarta', 
     isActive: true 
@@ -92,6 +96,8 @@ export const getSampleUsers = (): User[] => [
     email: 'kakang@example.com', 
     registeredAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), 
     lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), 
+    lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    lastLogout: '',
     usageCount: 23, 
     location: 'Bawean', 
     isActive: true 
@@ -102,6 +108,8 @@ export const getSampleUsers = (): User[] => [
     email: 'joko@example.com', 
     registeredAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), 
     lastActive: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), 
+    lastLogin: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    lastLogout: '',
     usageCount: 12, 
     location: 'Surabaya', 
     isActive: true 

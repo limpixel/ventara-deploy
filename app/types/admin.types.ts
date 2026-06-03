@@ -5,6 +5,8 @@ export interface User {
   email: string;
   registeredAt: string;
   lastActive: string;
+  lastLogin: string;
+  lastLogout: string;
   usageCount: number;
   location: string;
   isActive: boolean;
@@ -36,9 +38,12 @@ export interface UsageLog {
 export interface DashboardStats {
   totalUsers: number;
   activeUsersToday: number;
+  totalUsersToday: number;
   totalUsageToday: number;
   topLocations: { location: string; count: number }[];
   recentActivities: UsageLog[];
+  activeUsers: User[];
+  weeklyUsage: { day: string; count: number }[];
 }
 
 export type AdminTab = 'dashboard' | 'resource' | 'users';
