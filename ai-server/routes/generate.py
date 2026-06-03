@@ -299,6 +299,7 @@ def _worker_generate_best(username: str) -> None:
         MODEL_FOLDER,
         OUTPUT_FOLDER,
         get_active_dataset_path,
+        metrics_dl,
     )
     from training.metrics import get_metrics
     from training.nlp import build_forecast_text, generate_nlp_report
@@ -310,7 +311,13 @@ def _worker_generate_best(username: str) -> None:
 
         # Load fresh di thread ini — hindari TF cross-thread issue
         from tensorflow.keras.models import load_model as _load
-        _lstm     = _load(os.path.join(MODEL_FOLDER, "lstm.h5"))
+
+        # Pilih DL terbaik berdasarkan MAPE
+        best_dl_name = min(metrics_dl, key=lambda m: metrics_dl[m]["MAPE"]) if metrics_dl else "LSTM"
+        dl_filename  = "bilstm.h5" if best_dl_name.upper() == "BILSTM" else "lstm.h5"
+        print(f"🤖 Best DL: {best_dl_name} ({dl_filename})")
+
+        _lstm     = _load(os.path.join(MODEL_FOLDER, dl_filename))
         _scaler_X = joblib.load(os.path.join(MODEL_FOLDER, "scaler_X.pkl"))
         _scaler_y = joblib.load(os.path.join(MODEL_FOLDER, "scaler_y.pkl"))
         _dl_cols  = DL_INPUT_COLS if DL_INPUT_COLS else [c for c in df.columns if c != TARGET]
@@ -329,8 +336,9 @@ def _worker_generate_best(username: str) -> None:
             _lstm.predict(seqs_hist, verbose=0)
         ).flatten()
 
-        df_out["XGB_LSTM_Stacked"] = np.nan
-        df_out.loc[df_out.index[STEP:], "XGB_LSTM_Stacked"] = stacked_preds
+        stacked_col = f"XGB_{best_dl_name}_Stacked"
+        df_out[stacked_col] = np.nan
+        df_out.loc[df_out.index[STEP:], stacked_col] = stacked_preds
 
         stacking_metrics = get_metrics(
             np.array(y[STEP:STEP + len(stacked_preds)]),
@@ -407,15 +415,16 @@ def _worker_generate_best(username: str) -> None:
             future_rows.append({
                 "YEAR": int(next_time.year), "MO": int(next_time.month),
                 "DY":   int(next_time.day),  "HR": int(next_time.hour),
-                "XGB_Base":         round(pred_xgb,     3),
-                "XGB_LSTM_Stacked": round(pred_stacked, 3)
+                "XGB_Base": round(pred_xgb,     3),
+                stacked_col: round(pred_stacked, 3)
             })
 
         df_future  = pd.DataFrame(future_rows)
         df_out     = pd.concat([df_out, df_future], ignore_index=True)
-        df_out     = df_out[["YEAR", "MO", "DY", "HR", TARGET, "XGB_Base", "XGB_LSTM_Stacked"]]
-        stats      = build_forecast_text(df_future.rename(columns={"XGB_LSTM_Stacked": TARGET}), TARGET)
-        nlp_report = generate_nlp_report(stats, "XGB-LSTM Stacking", stacking_metrics)
+        df_out     = df_out[["YEAR", "MO", "DY", "HR", TARGET, "XGB_Base", stacked_col]]
+        stats      = build_forecast_text(df_future.rename(columns={stacked_col: TARGET}), TARGET)
+        stacking_name = f"XGB-{best_dl_name} Stacking"
+        nlp_report = generate_nlp_report(stats, stacking_name, stacking_metrics)
 
         for col in ["YEAR", "MO", "DY", "HR"]:
             df_out[col] = df_out[col].astype(int)
@@ -430,6 +439,7 @@ def _worker_generate_best(username: str) -> None:
         with open(output_path, "w", encoding="utf-8-sig", newline="") as f:
             f.write("-BEGIN HEADER-\n")
             f.write(f"Dataset: {os.path.basename(get_active_dataset_path())}\n")
+            f.write(f"Model: {stacking_name}\n")
             f.write(f"Stacking Metrics: MAE={stacking_metrics['MAE']} RMSE={stacking_metrics['RMSE']} MAPE={stacking_metrics['MAPE']}% R2={stacking_metrics['R2']}\n")
             f.write(f"Forecast Summary:\n{nlp_report}\n\n-END HEADER-\n\n")
             df_out.to_csv(f, index=False, sep=";")

@@ -15,6 +15,8 @@ from routes.main_routes import main_bp
 from routes.upload import upload_bp
 from routes.generate import generate_bp
 from routes.auth import auth_bp
+from routes.history import history_bp
+
 # =========================
 # UTILS
 # =========================
@@ -50,7 +52,7 @@ CORS(
     supports_credentials=True,
     origins=["http://localhost:3000"],
     allow_headers=["Content-Type", "X-Username"],
-    methods=["GET", "POST", "OPTIONS"]
+    methods=["GET", "POST", "OPTIONS", "DELETE"]
 )
 
 app.secret_key = SECRET_KEY
@@ -71,6 +73,8 @@ app.register_blueprint(upload_bp)
 app.register_blueprint(generate_bp)
 
 app.register_blueprint(auth_bp)
+
+app.register_blueprint(history_bp)
 
 # =========================
 # LOAD DATASET
@@ -164,15 +168,6 @@ print(
     f"ML={list(metrics.keys())} | "
     f"DL={list(metrics_dl.keys())}"
 )
-
-
-# =========================
-# SAVING HISTORY
-# =========================
-from routes.history import history_bp
-
-app.register_blueprint(history_bp)
-
 
 # =========================
 # RUN APP

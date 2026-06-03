@@ -18,6 +18,11 @@ export default function EditProfilePage() {
   const [avatarError, setAvatarError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMsg, setPasswordMsg] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
     setUsername(sessionStorage.getItem("ventara_username") || "");
@@ -51,6 +56,48 @@ export default function EditProfilePage() {
       setSaving(false);
     }
   }
+
+  async function handleSavePassword() {
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    setPasswordMsg("❌ Semua field password harus diisi.");
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    setPasswordMsg("❌ Password baru tidak cocok.");
+    return;
+  }
+  if (newPassword.length < 4) {
+    setPasswordMsg("❌ Password minimal 4 karakter.");
+    return;
+  }
+  setSavingPassword(true);
+  setPasswordMsg("");
+  try {
+    const res = await fetch("http://localhost:5000/change_password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        username,
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      setPasswordMsg("❌ " + data.message);
+      return;
+    }
+    setPasswordMsg("✅ Password berhasil diubah!");
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  } catch {
+    setPasswordMsg("❌ Gagal terhubung ke server.");
+  } finally {
+    setSavingPassword(false);
+  }
+}
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -156,6 +203,68 @@ export default function EditProfilePage() {
                   <p className="text-xs text-gray-400 mt-0.5">Username tidak dapat diubah</p>
                 </div>
                 <span className="text-sm text-gray-400 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-100">{username || "-"}</span>
+              </div>
+            </div>
+
+            {/* PASSWORD */}
+            <div className="bg-white border border-gray-100 rounded-xl divide-y divide-gray-100 max-w-4xl ml-12 mt-6">
+              <div className="px-12 py-4">
+                <p className="text-sm font-medium text-gray-700 mb-4">Ubah Password</p>
+              </div>
+
+              <div className="flex items-center justify-between py-4 px-12">
+                <div>
+                  <p className="text-sm text-gray-700">Password Saat Ini</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Masukkan password yang sekarang</p>
+                </div>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 text-gray-700 w-52"
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-4 px-12">
+                <div>
+                  <p className="text-sm text-gray-700">Password Baru</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Minimal 4 karakter</p>
+                </div>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 text-gray-700 w-52"
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-4 px-12">
+                <div>
+                  <p className="text-sm text-gray-700">Konfirmasi Password</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Ulangi password baru</p>
+                </div>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 text-gray-700 w-52"
+                />
+              </div>
+
+              {passwordMsg && (
+                <div className="px-12 py-3">
+                  <p className="text-sm">{passwordMsg}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end px-12 py-4">
+                <button
+                  onClick={handleSavePassword}
+                  disabled={savingPassword}
+                  className="text-sm px-5 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-60 cursor-pointer"
+                >
+                  {savingPassword ? "Menyimpan..." : "Ubah Password"}
+                </button>
               </div>
             </div>
 

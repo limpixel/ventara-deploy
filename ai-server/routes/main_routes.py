@@ -159,6 +159,7 @@ def forecasting_data():
         "metrics": all_metrics,
         "best_models": best_model_names
     })
+    
 # =========================
 # ANALITIK
 # =========================

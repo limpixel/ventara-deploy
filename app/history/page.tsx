@@ -47,6 +47,17 @@ export default function HistorisPage() {
   const [search, setSearch] = useState("");
   const [data, setData] = useState<HistorisItem[]>([]);         // ← tambah
   const [detailItem, setDetailItem] = useState<HistorisItem | null>(null); // ← tambah
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
+  const [storageInfo, setStorageInfo] = useState({
+    tier: "gratis",
+    usage_mb: 0,
+    limit_mb: 10,
+    percent: 0,
+  });
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [selectedTier, setSelectedTier] = useState("basic");
 
 useEffect(() => {
   async function fetchHistory() {
@@ -59,10 +70,34 @@ useEffect(() => {
       console.error("Failed to fetch history:", error);
     }
   }
+
+  async function fetchStorage() {
+    try {
+      const username = sessionStorage.getItem("ventara_username") || "";
+
+      const res = await fetch(
+        `/api/storage-info?username=${username}`
+      );
+
+      const json = await res.json();
+
+      console.log("HISTORY JSON =", json);
+
+      if (json.success) {
+        setStorageInfo(json);
+      }
+    } catch (error) {
+      console.error("Failed to fetch storage:", error);
+    }
+  }
+
   fetchHistory();
+  fetchStorage();
 }, []);;
 
   // ganti DUMMY_DATA jadi data
+
+  console.log("DATA STATE =", data);
   const filtered = data.filter((d) => {
   const q = search.toLowerCase();
     return (
@@ -71,6 +106,21 @@ useEffect(() => {
       d.status.toLowerCase().includes(q)
     );
   });
+
+  async function handleDelete(id: number) {
+  const username = sessionStorage.getItem("ventara_username") || "";
+  setDeletingId(id);
+  try {
+    await fetch(`/api/delete-history?username=${username}&id=${id}`, {
+      method: "DELETE",
+    });
+    setData(prev => prev.filter(d => d.id !== id));
+  } catch (error) {
+    console.error("Failed to delete:", error);
+  } finally {
+    setDeletingId(null);
+  }
+}
 
   return (
     <div className="flex h-screen">
@@ -92,14 +142,9 @@ useEffect(() => {
           </div>
 
           {/* Toolbar */}
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-3">
             <div className="relative flex-1">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
               </svg>
               <input
@@ -113,6 +158,36 @@ useEffect(() => {
             <div className="bg-teal-600 text-white text-sm font-medium px-5 py-2.5 rounded-xl whitespace-nowrap">
               Total: {filtered.length} Perhitungan
             </div>
+          </div>
+
+          {/* Storage Bar */}
+          <div className="bg-white border border-gray-200 rounded-xl px-5 py-3.5 mb-5 flex items-center gap-4">
+            <div className="flex-1">
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs text-gray-500">
+                  Penggunaan Penyimpanan —{" "}
+                  <span className="font-semibold text-gray-700 capitalize">{storageInfo.tier}</span>
+                </span>
+                <span className="text-xs text-gray-500">
+                  {storageInfo.usage_mb.toFixed(2)} / {storageInfo.limit_mb.toFixed(2)} MB ({storageInfo.percent.toFixed(1)}%)
+                </span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${
+                    storageInfo.percent >= 90 ? "bg-red-500" :
+                    storageInfo.percent >= 70 ? "bg-amber-400" : "bg-teal-500"
+                  }`}
+                  style={{ width: `${Math.min(storageInfo.percent, 100)}%` }}
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              className="text-sm text-teal-600 font-medium hover:text-teal-700 whitespace-nowrap border border-teal-200 px-4 py-2 rounded-xl hover:bg-teal-50 transition"
+            >
+              Upgrade (Gratis)
+            </button>
           </div>
 
           {/* Table */}
@@ -166,7 +241,13 @@ useEffect(() => {
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => setDetailItem(row)}
+                            onClick={() => {
+                                const username = sessionStorage.getItem("ventara_username");
+                                sessionStorage.setItem(`ventara_ui_state_${username}`, "nlp");
+                                sessionStorage.setItem(`ventara_nlp_report_${username}`, row.nlp_report || "");
+                                sessionStorage.setItem(`ventara_generate_mode_${username}`, row.algo.includes("BiLSTM") || row.algo.includes("LSTM") ? "best" : "general");
+                                window.location.href = "/overview";
+                              }} 
                             className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
                             title="Lihat detail"
                           >
@@ -181,6 +262,15 @@ useEffect(() => {
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmId(row.id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors"
+                            title="Hapus"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
                         </div>
@@ -214,6 +304,113 @@ useEffect(() => {
             </div>
           </div>
         )}
+        {/* Popup Delete History */}
+              {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Hapus Riwayat</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Tindakan ini tidak dapat dibatalkan.</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Apakah Anda yakin ingin menghapus riwayat ini?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => {
+                  handleDelete(deleteConfirmId);
+                  setDeleteConfirmId(null);
+                }}
+                disabled={deletingId === deleteConfirmId}
+                className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {deletingId === deleteConfirmId ? "Menghapus..." : "Ya, Hapus"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Upgrade */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-gray-900 text-lg">Upgrade Penyimpanan</h3>
+              <button onClick={() => setShowUpgradeModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">
+              Paket saat ini:{" "}
+              <span className="text-teal-600 font-semibold capitalize">
+                {storageInfo.tier} ({storageInfo.limit_mb} MB)
+              </span>
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              {[
+                { key: "basic", label: "Basic", mb: "100.00 MB", price: "Rp 29.000 / bulan" },
+                { key: "pro", label: "Pro", mb: "500.00 MB", price: "Rp 99.000 / bulan" },
+                { key: "business", label: "Business", mb: "2048.00 MB", price: "Rp 299.000 / bulan" },
+              ].map((tier) => (
+                <div
+                  key={tier.key}
+                  onClick={() => setSelectedTier(tier.key)}
+                  className={`cursor-pointer border-2 rounded-xl p-4 transition ${
+                    selectedTier === tier.key
+                      ? "border-teal-400 bg-teal-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-semibold text-gray-800">{tier.label}</span>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Bayar</span>
+                  </div>
+                  <p className="text-xl font-bold text-gray-900">{tier.mb}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{tier.price}</p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={async () => {
+                const username = sessionStorage.getItem("ventara_username") || "";
+                await fetch("http://localhost:5000/upgrade_tier", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "X-Username": username },
+                  credentials: "include",
+                  body: JSON.stringify({ tier: selectedTier }),
+                });
+                setShowUpgradeModal(false);
+                // refresh storage info
+                const res = await fetch("http://localhost:5000/storage_info", {
+                  headers: { "X-Username": username },
+                  credentials: "include",
+                });
+                const json = await res.json();
+                if (json.success) setStorageInfo(json);
+              }}
+              className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition capitalize"
+            >
+              Upgrade ke {selectedTier} — {
+                { basic: "Rp 29.000", pro: "Rp 99.000", business: "Rp 299.000" }[selectedTier]
+              }/bulan
+            </button>
+          </div>
+        </div>
+      )}
       </main>
     </div>
   );
