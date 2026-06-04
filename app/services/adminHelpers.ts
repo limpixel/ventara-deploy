@@ -3,32 +3,10 @@ import { ResourceLimit, UserResourceLimit, User } from '../types/admin.types';
 
 export const DEFAULT_RESOURCE_LIMITS: ResourceLimit[] = [
   { 
-    id: 'forecast', 
-    featureName: 'Forecasting / Prediksi', 
-    dailyLimit: 10, 
-    monthlyLimit: 100, 
-    description: 'Prediksi kecepatan angin 1 jam ke depan' 
-  },
-  { 
-    id: 'analitik', 
-    featureName: 'Report Analytics', 
-    dailyLimit: 20, 
-    monthlyLimit: 200, 
-    description: 'Analisis report dan prakiraan 7 hari' 
-  },
-  { 
-    id: 'trends', 
-    featureName: 'Trends Reports', 
-    dailyLimit: 15, 
-    monthlyLimit: 150, 
-    description: 'Grafik tren suhu, kelembapan, dan angin' 
-  },
-  { 
-    id: 'export', 
-    featureName: 'Export Data', 
-    dailyLimit: 5, 
-    monthlyLimit: 50, 
-    description: 'Ekspor data ke CSV/Excel' 
+    id: 'storage', 
+    featureName: 'Penyimpanan', 
+    maxStorageMb: 10, 
+    description: 'Batas total penyimpanan pengguna (dalam MB)' 
   },
 ];
 

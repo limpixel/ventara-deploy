@@ -4,7 +4,7 @@ import { ResourceLimit } from '@/app/types/admin.types';
 
 interface ResourceCardProps {
   limit: ResourceLimit;
-  userLimit: { dailyLimit: number; monthlyLimit: number };
+  userLimit: { maxStorageMb: number };
   isCustomMode: boolean;
   onDailyChange: (value: number) => void;
   onMonthlyChange: (value: number) => void;
@@ -34,39 +34,23 @@ export const ResourceCard = ({
             </div>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-4 mt-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
-              Batas Harian
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={userLimit.dailyLimit}
-                onChange={(e) => onDailyChange(parseInt(e.target.value) || 0)}
-                className="w-28 px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white/50 focus:ring-2 focus:ring-[#00a991]/40 focus:border-[#00a991] outline-none transition-all"
-              />
-              <span className="text-sm text-gray-400">/hari</span>
-            </div>
+        <div className="mt-3">
+          <label className="block text-sm font-medium text-gray-600 mb-2">
+            Batas Penyimpanan (MB)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              max="10"
+              step="0.5"
+              value={userLimit.maxStorageMb}
+              onChange={(e) => onDailyChange(parseFloat(e.target.value) || 0)}
+              className="w-28 px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white/50 focus:ring-2 focus:ring-[#00a991]/40 focus:border-[#00a991] outline-none transition-all"
+            />
+            <span className="text-sm text-gray-400">MB</span>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
-              Batas Bulanan
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min="0"
-                max="500"
-                value={userLimit.monthlyLimit}
-                onChange={(e) => onMonthlyChange(parseInt(e.target.value) || 0)}
-                className="w-28 px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white/50 focus:ring-2 focus:ring-[#00a991]/40 focus:border-[#00a991] outline-none transition-all"
-              />
-              <span className="text-sm text-gray-400">/bulan</span>
-            </div>
-          </div>
+          <p className="text-xs text-gray-400 mt-2">Maksimal 10 MB. Setiap proses ±2-3 MB.</p>
         </div>
       </div>
     </div>

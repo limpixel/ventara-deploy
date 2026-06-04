@@ -20,6 +20,13 @@ def get_username():
 def get_history_usage_bytes(user: dict) -> int:
     return len(json.dumps(user.get("history", [])).encode("utf-8"))
 
+def get_effective_limit(user: dict) -> int:
+    storage_mb = user.get("storageLimitMb")
+    if storage_mb is not None:
+        return int(storage_mb * 1024 * 1024)
+    tier = user.get("storage_tier", "gratis")
+    return TIER_LIMITS.get(tier, TIER_LIMITS["gratis"])
+
 
 # =========================
 # SAVE HISTORY
@@ -41,8 +48,7 @@ def save_history():
     if not data:
         return jsonify({"success": False, "message": "No data provided."}), 400
 
-    tier = user.get("storage_tier", "gratis")
-    limit = TIER_LIMITS.get(tier, TIER_LIMITS["gratis"])
+    limit = get_effective_limit(user)
 
     # hitung usage sama persis dengan storage_info
     history_size = get_history_usage_bytes(user)
@@ -71,9 +77,8 @@ def save_history():
     if current_usage + new_entry_size > limit:
         return jsonify({
             "success": False,
-            "message": "Storage penuh. Upgrade tier untuk menyimpan lebih banyak.",
+            "message": "Storage penuh. Hapus beberapa history atau tingkatkan limit penyimpanan.",
             "storage_full": True,
-            "tier": tier,
             "usage": current_usage,
             "limit": limit,
         }), 403
@@ -138,7 +143,7 @@ def storage_info():
         return jsonify({"success": False}), 404
 
     tier = user.get("storage_tier", "gratis")
-    limit = TIER_LIMITS.get(tier, TIER_LIMITS["gratis"])
+    limit = get_effective_limit(user)
 
     # history size
     history_size = get_history_usage_bytes(user)
@@ -162,6 +167,8 @@ def storage_info():
     print("CSV SIZE =", csv_size)
     print("TOTAL USAGE =", usage)
 
+    admin_limit_mb = user.get("storageLimitMb")
+
     return jsonify({
         "success": True,
         "tier": tier,
@@ -170,6 +177,7 @@ def storage_info():
         "usage_mb": round(usage / 1024 / 1024, 4),
         "limit_mb": round(limit / 1024 / 1024, 2),
         "percent": round((usage / limit) * 100, 4),
+        "admin_limit_mb": admin_limit_mb,
     })
 
 # =========================

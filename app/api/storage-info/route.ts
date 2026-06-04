@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
         "X-Username": username,
       },
     }
-  );
+);
 
   const data = await res.json();
 

@@ -305,3 +305,31 @@ def login_count():
 @auth_bp.route("/admins", methods=["GET"])
 def get_admins():
     return jsonify(load_admins())
+
+
+# =========================
+# USER DATA (read/write user JSON)
+# =========================
+
+@auth_bp.route("/user-data/<username>", methods=["GET"])
+def get_user_data(username):
+    user = load_user(username)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(user)
+
+
+@auth_bp.route("/user-data/<username>", methods=["PUT"])
+def update_user_data(username):
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Missing data"}), 400
+
+    user = load_user(username)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    user.update(data)
+    save_user(user)
+
+    return jsonify({"success": True, "message": f"User data updated for {username}"})

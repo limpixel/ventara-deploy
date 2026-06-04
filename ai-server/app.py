@@ -52,7 +52,7 @@ CORS(
     supports_credentials=True,
     origins=["http://localhost:3000"],
     allow_headers=["Content-Type", "X-Username"],
-    methods=["GET", "POST", "OPTIONS", "DELETE"]
+    methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"]
 )
 
 app.secret_key = SECRET_KEY

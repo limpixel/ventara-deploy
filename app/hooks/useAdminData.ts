@@ -167,7 +167,7 @@ useEffect(() => {
 
 }, []);
   // =========================
-  // LOAD LOCAL DATA
+  // LOAD INITIAL DATA (localStorage + Flask)
   // =========================
   useEffect(() => {
 
@@ -208,7 +208,7 @@ useEffect(() => {
       setUsageLogs(getSampleUsageLogs());
     }
 
-  }, []);
+  }, [users]);
 
   // =========================
   // DASHBOARD STATS
@@ -309,7 +309,7 @@ useEffect(() => {
 
 const updateResourceLimit = (
   id: string,
-  field: "dailyLimit" | "monthlyLimit",
+  field: "maxStorageMb" | string,
   value: number
 ) => {
 
@@ -319,21 +319,7 @@ const updateResourceLimit = (
       if (r.id !== id)
         return r;
 
-      return {
-
-        ...r,
-
-        dailyLimit:
-          field === "dailyLimit"
-            ? value
-            : r.dailyLimit,
-
-        monthlyLimit:
-          field === "monthlyLimit"
-            ? value
-            : r.monthlyLimit,
-
-      };
+      return { ...r, maxStorageMb: value };
 
     });
 
@@ -349,7 +335,7 @@ const updateResourceLimit = (
 const updateUserResourceLimit = (
   userId: string,
   featureId: string,
-  field: "daily" | "monthly",
+  _field: string,
   value: number
 ) => {
 
@@ -376,21 +362,7 @@ const updateUserResourceLimit = (
 
     };
 
-  const updatedItem = {
-
-    ...base,
-
-    dailyLimit:
-      field === "daily"
-        ? value
-        : base.dailyLimit,
-
-    monthlyLimit:
-      field === "monthly"
-        ? value
-        : base.monthlyLimit,
-
-  };
+  const updatedItem = { ...base, maxStorageMb: value };
 
   const updated = [
 
@@ -413,12 +385,32 @@ const updateUserResourceLimit = (
     JSON.stringify(updated)
   );
 
+  // Save to Flask server
+  const username = users.find(u => u.id === userId)?.username;
+  if (username) {
+    fetch('http://localhost:5000/user-data/' + username, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        resourceLimits: Object.fromEntries(
+          updated
+            .filter(x => x.userId === userId)
+            .map(x => [x.id, {
+              featureName: x.featureName,
+              description: x.description,
+              maxStorageMb: x.maxStorageMb,
+            }])
+        ),
+      }),
+    }).catch(_ => {});
+  }
+
 };
 
 const getUserLimit = (
   userId: string,
   featureId: string
-) => {
+): { maxStorageMb: number } => {
 
   const custom =
     userResourceLimits.find(
@@ -428,17 +420,7 @@ const getUserLimit = (
     );
 
   if (custom) {
-
-    return {
-
-      dailyLimit:
-        custom.dailyLimit,
-
-      monthlyLimit:
-        custom.monthlyLimit,
-
-    };
-
+    return { maxStorageMb: custom.maxStorageMb };
   }
 
   const def =
@@ -446,15 +428,7 @@ const getUserLimit = (
       x => x.id === featureId
     );
 
-  return {
-
-    dailyLimit:
-      def?.dailyLimit ?? 0,
-
-    monthlyLimit:
-      def?.monthlyLimit ?? 0,
-
-  };
+  return { maxStorageMb: def?.maxStorageMb ?? 10 };
 
 };
 
@@ -502,23 +476,51 @@ const activateUser = (
 
 };
 
+const fetchUserData = async (username: string): Promise<{ resourceLimits?: Record<string, { maxStorageMb: number }>; history?: any[]; storageLimitMb?: number } | null> => {
+  try {
+    const res = await fetch('http://localhost:5000/user-data/' + username);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) {
+    return null;
+  }
+};
+
+const updateUserStorageLimit = async (username: string, mb: number): Promise<boolean> => {
+  try {
+    const res = await fetch('http://localhost:5000/user-data/' + username, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ storageLimitMb: mb }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Failed to update storage limit:', err);
+    return false;
+  }
+};
+
   return {
   users,
   setUsers,
 
   resourceLimits,
   userResourceLimits,
+  setUserResourceLimits,
 
   usageLogs,
   dashboardStats,
 
   updateResourceLimit,
   updateUserResourceLimit,
+  updateUserStorageLimit,
 
   getUserLimit,
   getUserUsageToday,
 
   deleteUser,
   activateUser,
+
+  fetchUserData,
 };
 };
