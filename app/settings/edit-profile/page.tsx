@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
 
-const DEFAULT_AVATAR = "/icon/Freak-nail.jpg";
+const DEFAULT_AVATAR = "/icon/default-avatar-profile.jpg";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -145,7 +145,7 @@ export default function EditProfilePage() {
               >
                 <img
                   src={displayAvatar}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover border-2 border-teal-500 rounded-full"
                   alt=""
                   onError={() => setAvatarError(true)}
                 />

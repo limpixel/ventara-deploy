@@ -3,8 +3,6 @@ import traceback
 import joblib
 import numpy as np
 
-from typing import Any
-
 from config import (
     MODEL_FOLDER,
     TARGET,
@@ -12,90 +10,63 @@ from config import (
 )
 
 
-def init_dl_models(df_ref):
+def init_dl_models(df_ref, target_var: str = None):
+
+    if target_var is None:
+        target_var = TARGET
+
+    suffix = f"_{target_var}"
 
     try:
         from tensorflow.keras.models import load_model
 
-        print("📦 Load DL model...")
+        print(f"📦 Load DL model untuk {target_var}...")
 
-        lstm = load_model(
-            os.path.join(
-                MODEL_FOLDER,
-                "lstm.h5"
-            )
-        )
+        # coba load dengan suffix dulu, fallback ke tanpa suffix
+        lstm_path   = os.path.join(MODEL_FOLDER, f"lstm{suffix}.h5")
+        bilstm_path = os.path.join(MODEL_FOLDER, f"bilstm{suffix}.h5")
+        scalerX_path = os.path.join(MODEL_FOLDER, f"scaler_X{suffix}.pkl")
+        scalery_path = os.path.join(MODEL_FOLDER, f"scaler_y{suffix}.pkl")
+        dlcols_path  = os.path.join(MODEL_FOLDER, f"dl_cols{suffix}.pkl")
 
-        bilstm = load_model(
-            os.path.join(
-                MODEL_FOLDER,
-                "bilstm.h5"
-            )
-        )
+        # fallback ke model lama tanpa suffix
+        if not os.path.exists(lstm_path):
+            lstm_path   = os.path.join(MODEL_FOLDER, "lstm.h5")
+            bilstm_path = os.path.join(MODEL_FOLDER, "bilstm.h5")
+            scalerX_path = os.path.join(MODEL_FOLDER, "scaler_X.pkl")
+            scalery_path = os.path.join(MODEL_FOLDER, "scaler_y.pkl")
+            dlcols_path  = None
+            print(f"⚠️ Model {target_var} tidak ada, fallback ke default")
 
-        scaler_X = joblib.load(
-            os.path.join(
-                MODEL_FOLDER,
-                "scaler_X.pkl"
-            )
-        )
+        lstm   = load_model(lstm_path)
+        bilstm = load_model(bilstm_path)
 
-        scaler_y = joblib.load(
-            os.path.join(
-                MODEL_FOLDER,
-                "scaler_y.pkl"
-            )
-        )
+        scaler_X = joblib.load(scalerX_path)
+        scaler_y = joblib.load(scalery_path)
 
-        if hasattr(
-            scaler_X,
-            "feature_names_in_"
-        ):
-
-            dl_cols = list(
-                scaler_X.feature_names_in_
-            )
-
+        # load dl_cols
+        if dlcols_path and os.path.exists(dlcols_path):
+            dl_cols = joblib.load(dlcols_path)
+        elif hasattr(scaler_X, "feature_names_in_"):
+            dl_cols = list(scaler_X.feature_names_in_)
         else:
+            dl_cols = [c for c in df_ref.columns if c != target_var]
 
-            dl_cols = [
-                c for c in df_ref.columns
-                if c != TARGET
-            ]
-
-        missing = [
-            c for c in dl_cols
-            if c not in df_ref.columns
-        ]
-
+        missing = [c for c in dl_cols if c not in df_ref.columns]
         if missing:
-
-            raise ValueError(
-                f"Kolom DL tidak ada: {missing}"
-            )
+            raise ValueError(f"Kolom DL tidak ada: {missing}")
 
         X_scaled = np.array(
-            scaler_X.transform(
-                df_ref[dl_cols].copy()
-            ),
+            scaler_X.transform(df_ref[dl_cols].copy()),
             dtype=np.float32
         )
 
         if len(X_scaled) < STEP:
+            raise ValueError(f"Data kurang dari STEP ({STEP})")
 
-            raise ValueError(
-                f"Data kurang dari STEP ({STEP})"
-            )
+        data_seq = X_scaled[-STEP:].reshape(1, STEP, X_scaled.shape[1])
 
-        data_seq = X_scaled[-STEP:].reshape(
-            1,
-            STEP,
-            X_scaled.shape[1]
-        )
-
-        print(
-            f"✅ DL siap | shape={X_scaled.shape}"
-        )
+        print(f"✅ DL siap untuk {target_var} | shape={X_scaled.shape}")
 
         return {
             "lstm": lstm,
@@ -109,11 +80,8 @@ def init_dl_models(df_ref):
         }
 
     except Exception as e:
-
-        print(f"⚠️ DL tidak tersedia: {e}")
-
+        print(f"⚠️ DL tidak tersedia untuk {target_var}: {e}")
         traceback.print_exc()
-
         return {
             "lstm": None,
             "bilstm": None,
@@ -124,3 +92,8 @@ def init_dl_models(df_ref):
             "DL_INPUT_COLS": [],
             "DL_READY": False
         }
+
+
+def load_dl_for_var(df_ref, var: str):
+    """Load DL models untuk variabel tertentu saat generate."""
+    return init_dl_models(df_ref, target_var=var)

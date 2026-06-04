@@ -83,7 +83,7 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
     try {
       const formData = new FormData();
       formData.append("model", selectedModel);
-      formData.append("selected_var", selectedVar);
+      formData.append("var", selectedVar);
       const endpoint = selectedModel === "best" ? "/api/generate-best" : "/api/generate";
       const res = await fetch(endpoint, { method: "POST", body: formData });
       const data = await res.json();

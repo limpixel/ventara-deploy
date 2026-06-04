@@ -119,14 +119,18 @@ def worker_retrain(
         log("✅ ML selesai")
 
         # =========================
-        # TRAIN DL
+        # TRAIN DL — PER VARIABEL
         # =========================
-        log("🔧 Training DL...")
-        dl_ok = train_dl_models(df)
-        if dl_ok:
-            log("✅ DL selesai")
-        else:
-            log("⚠️ DL gagal")
+        for var in TRAIN_VARS:
+            if var not in df.columns:
+                log(f"⚠️ Kolom {var} tidak ada, skip DL")
+                continue
+            log(f"🔧 Training DL untuk {var}...")
+            dl_ok = train_dl_models(df, target_var=var)
+            if dl_ok:
+                np.log(f"✅ DL {var} selesai")
+            else:
+                np.log(f"⚠️ DL {var} gagal")
 
         # =========================
         # SIMPAN REGISTRY + SNAPSHOT ← TAMBAH INI

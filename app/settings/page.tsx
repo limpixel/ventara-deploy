@@ -6,7 +6,7 @@ import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
 import { useStorage } from "@/app/context/StorageContext";
 
-const DEFAULT_AVATAR = "/icon/Freak-nail.jpg";
+const DEFAULT_AVATAR = "/icon/default-avatar-profile.jpg";
 
 export default function SettingsPage() {
   const router = useRouter();
