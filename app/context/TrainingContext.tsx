@@ -49,18 +49,19 @@ function calcProgress(step: string, done: boolean): number {
 const TrainingContext = createContext<TrainingContextValue | null>(null);
 
 export function TrainingProvider({ children }: { children: React.ReactNode }) {
-  const [training, setTraining] = useState<TrainingState>(() => {
-    if (typeof window === "undefined") return DEFAULT_STATE;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) return DEFAULT_STATE;
-      const parsed: TrainingState = JSON.parse(saved);
-      if (!parsed.isTraining || parsed.progress >= 100) return DEFAULT_STATE;
-      return parsed;
-    } catch {
-      return DEFAULT_STATE;
-    }
-  });
+  const [training, setTraining] = useState<TrainingState>(DEFAULT_STATE);
+
+useEffect(() => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    const parsed: TrainingState = JSON.parse(saved);
+    if (!parsed.isTraining || parsed.progress >= 100) return;
+    setTraining(parsed);
+  } catch {
+    // ignore
+  }
+}, []);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 

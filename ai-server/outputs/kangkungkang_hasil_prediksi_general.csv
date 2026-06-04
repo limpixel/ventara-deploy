@@ -1,5 +1,5 @@
 ﻿-BEGIN HEADER-
-Dataset: NASA_Bawean_Hourly.csv
+Dataset: NASA_Sukabumi_Hourly.csv
 Forecast Summary:
 Prediksi kecepatan angin untuk periode 01-01-2023 hingga 08-01-2023 menunjukkan rata-rata 5.57 m/s, termasuk kategori angin segar. Kecepatan tertinggi mencapai 5.80 m/s dan terendah 5.29 m/s, dengan standar deviasi 0.13 m/s. Angin cenderung paling kuat sekitar pukul 15:00 dan paling lemah sekitar pukul 05:00. Secara umum tren angin meningkat menuju akhir periode. 
 

@@ -139,13 +139,19 @@ def upload_dataset():
     # =========================
     # CHECK CACHE TRAIN
     # =========================
+    from utils.cache_settings import (
+        get_cache_settings
+    )
+
+    settings = get_cache_settings()
+    
     already_trained, file_hash = (
         is_dataset_already_trained(
             final_path
         )
     )
 
-    if already_trained:
+    if settings["model_cache"] and already_trained:
         snap_dir = get_model_dir_for_hash(file_hash)
         registry = load_model_registry()
         entry = registry.get(file_hash, {})

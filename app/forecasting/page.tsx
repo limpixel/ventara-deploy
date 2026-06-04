@@ -228,7 +228,8 @@ export default function ForecastingPage() {
 
                         sessionStorage.setItem(`ventara_ui_state_${username}`, "nlp");
                         sessionStorage.setItem(`ventara_nlp_report_${username}`, nlpReport);
-                      }
+                      },
+                       selectedVars  // ← tambah argument ketiga
                     )
                   }
                   className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 text-white font-medium rounded-xl text-sm hover:bg-teal-600 transition-colors"
