@@ -11,6 +11,7 @@ import { GenerateProvider } from "@/app/context/GenerateContext";
 import GenerateBanner from "@/app/components/training/GenerateBanner";
 
 import { Toaster } from "react-hot-toast";
+import { StorageProvider } from "@/app/context/StorageContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,13 +45,13 @@ export default function RootLayout({
 
         <TrainingProvider>
           <GenerateProvider>
-            {children}
-
+            <StorageProvider>
+              {children}
+            </StorageProvider>
             <TrainingBanner />
             <GenerateBanner />
           </GenerateProvider>
         </TrainingProvider>
-
       </body>
     </html>
   );

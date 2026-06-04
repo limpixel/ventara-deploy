@@ -9,9 +9,10 @@ export function useAuth() {
   const router = useRouter();
   const [view, setView] = useState<AuthView>('landing');
   const [isError, setIsError] = useState(false);
+  const [deactivatedUsername, setDeactivatedUsername] = useState<string | null>(null);
 
   const handleLogin = async (
-  username: string,
+  loginUsername: string,
   password: string,
     // token: string
 ) => {
@@ -21,7 +22,7 @@ export function useAuth() {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
-        username,
+        username: loginUsername,
         password,
         //  token,
       }),
@@ -30,8 +31,12 @@ export function useAuth() {
     const data = await res.json();
 
     if (!data.success) {
-      setIsError(true);
-      setTimeout(() => setIsError(false), 4000);
+      if (res.status === 403) {
+        setDeactivatedUsername(loginUsername);
+      } else {
+        setIsError(true);
+        setTimeout(() => setIsError(false), 4000);
+      }
       return;
     }
 
@@ -100,5 +105,7 @@ export function useAuth() {
     handleRegister,
     handleForgotPassword,
     isError,
+    deactivatedUsername,
+    setDeactivatedUsername,
   };
 }

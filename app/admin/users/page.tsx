@@ -11,7 +11,8 @@ export default function UsersPage() {
   const { users, dashboardStats, deleteUser, activateUser, getUserUsageToday } = useAdminData();
   const [searchUser, setSearchUser] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const userToDelete = users.find(u => u.id === showDeleteConfirm);
+  const [showActivateConfirm, setShowActivateConfirm] = useState<string | null>(null);
+  const userToDelete = users.find(u => u.id === (showDeleteConfirm || showActivateConfirm));
 
   return (
     <div className="flex h-screen">
@@ -30,7 +31,7 @@ export default function UsersPage() {
               onSearchChange={setSearchUser}
               onEditUser={(user: User) => {}}
               onDeactivateUser={(id) => setShowDeleteConfirm(id)}
-              onActivateUser={activateUser}
+              onActivateUser={(id) => setShowActivateConfirm(id)}
               getUserUsageToday={getUserUsageToday}
             />
           </div>
@@ -39,8 +40,16 @@ export default function UsersPage() {
       <DeleteConfirmModal
         isOpen={!!showDeleteConfirm}
         username={userToDelete?.username || ''}
-        onConfirm={() => showDeleteConfirm && deleteUser(showDeleteConfirm) && setShowDeleteConfirm(null)}
+        mode="deactivate"
+        onConfirm={async () => { if (showDeleteConfirm) { await activateUser(showDeleteConfirm, false); setShowDeleteConfirm(null); } }}
         onCancel={() => setShowDeleteConfirm(null)}
+      />
+      <DeleteConfirmModal
+        isOpen={!!showActivateConfirm}
+        username={userToDelete?.username || ''}
+        mode="activate"
+        onConfirm={async () => { if (showActivateConfirm) { await activateUser(showActivateConfirm, true); setShowActivateConfirm(null); } }}
+        onCancel={() => setShowActivateConfirm(null)}
       />
     </div>
   );

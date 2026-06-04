@@ -108,7 +108,8 @@ def register():
         "email":    email,
         "password": password,
         "role":     "user",
-        "name":     name
+        "name":     name,
+        "isActive": True
     }
 
     save_user(new_user)
@@ -145,6 +146,10 @@ def login():
 
     if not found:
         return jsonify({"success": False, "message": "Wrong username or password."}), 401
+
+    # cek status aktif (khusus user)
+    if found["role"] == "user" and not found.get("isActive", True):
+        return jsonify({"success": False, "message": "Akun Anda telah dinonaktifkan. Hubungi admin."}), 403
 
     # catat lastLogin
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()

@@ -134,7 +134,7 @@ useEffect(() => {
           location:
             u.location || "",
 
-          isActive:true,
+          isActive: u.isActive ?? true,
 
         }));
 
@@ -458,22 +458,26 @@ const deleteUser = (
 
 };
 
-const activateUser = (
+const activateUser = async (
   userId: string,
   active: boolean = true
 ) => {
-
-  setUsers(prev =>
-    prev.map(u =>
-      u.id === userId
-        ? {
-            ...u,
-            isActive: active,
-          }
-        : u
-    )
-  );
-
+  const username = users.find(u => u.id === userId)?.username;
+  if (!username) return;
+  try {
+    await fetch('http://localhost:5000/user-data/' + username, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: active }),
+    });
+    setUsers(prev =>
+      prev.map(u =>
+        u.id === userId ? { ...u, isActive: active } : u
+      )
+    );
+  } catch (err) {
+    console.error('Failed to update user status:', err);
+  }
 };
 
 const fetchUserData = async (username: string): Promise<{ resourceLimits?: Record<string, { maxStorageMb: number }>; history?: any[]; storageLimitMb?: number } | null> => {

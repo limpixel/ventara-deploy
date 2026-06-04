@@ -84,7 +84,7 @@ def generate_commit():
 # =========================
 # BACKGROUND WORKER — GENERATE FULL
 # =========================
-def _worker_generate_full(username: str, selected_model: str, active_models: list, output_mode: str = "general") -> None:
+def _worker_generate_full(username: str, selected_model: str, active_models: list, output_mode: str = "general", selected_var: str = "WS10M") -> None:
     from app import (
     df,
     X,
@@ -148,7 +148,7 @@ def _worker_generate_full(username: str, selected_model: str, active_models: lis
                 df_out.loc[df_out.index[STEP:], "BiLSTM"] = bilstm_preds
                 
         future_steps  = 24 * 7
-        target_series = df[TARGET].tolist()
+        target_series = df[selected_var].tolist()
         last_row_dict = df.iloc[-1].to_dict()
         last_time     = pd.Timestamp(
             year=int(last_row_dict["YEAR"]), month=int(last_row_dict["MO"]),
@@ -202,7 +202,7 @@ def _worker_generate_full(username: str, selected_model: str, active_models: lis
                     new_row["DY"]    = int(next_time.day)
                     new_row["HR"]    = int(next_time.hour)
 
-                    new_row[TARGET]  = anchor
+                    new_row[selected_var] = anchor  # ← ganti dari new_row[TARGET]
 
                     new_row["lag1"]  = lag1
                     new_row["lag2"]  = lag2
@@ -229,7 +229,7 @@ def _worker_generate_full(username: str, selected_model: str, active_models: lis
             row: dict = {
                 "YEAR": int(next_time.year), "MO": int(next_time.month),
                 "DY":   int(next_time.day),  "HR": int(next_time.hour),
-                TARGET: round(anchor, 3),
+                selected_var: round(anchor, 3),
             }
             if "GBR"    in active_models: row["GBR"]    = round(pred_gbr,    3) if not np.isnan(pred_gbr)    else np.nan
             if "XGB"    in active_models: row["XGB"]    = round(pred_xgb,    3) if not np.isnan(pred_xgb)    else np.nan
@@ -240,11 +240,11 @@ def _worker_generate_full(username: str, selected_model: str, active_models: lis
 
         df_future  = pd.DataFrame(future_rows)
         df_out     = pd.concat([df_out, df_future], ignore_index=True)
-        stats      = build_forecast_text(df_future.copy(), TARGET)
+        stats      = build_forecast_text(df_future.copy(), selected_var)
         best_name  = get_best_ml_and_dl(metrics, metrics_dl)[0]
         nlp_report = generate_nlp_report(stats, best_name, {**metrics, **metrics_dl}[best_name])
 
-        base_cols = ["YEAR", "MO", "DY", "HR", TARGET]
+        base_cols = ["YEAR", "MO", "DY", "HR", selected_var]
         pred_cols = [c for c in ["GBR", "XGB", "KNN", "LSTM", "BiLSTM"] if c in df_out.columns]
         df_out    = df_out[base_cols + pred_cols]
         for col in ["YEAR", "MO", "DY", "HR"]:
@@ -500,6 +500,9 @@ def generate_full():
         "model",
         "all"
     )
+    
+    selected_var = request.form.get("selected_var", "WS10M")  # ← tambah
+    print(f"🔍 SELECTED VAR: {selected_var}")  # ← tambah
 
     all_models = list(metrics.keys()) + list(metrics_dl.keys())
 
@@ -516,7 +519,9 @@ def generate_full():
         args=(
             username,
             selected_model,
-            active_models
+            active_models,
+            "general",
+            selected_var  # ← tambah
         ),
 
         daemon=True

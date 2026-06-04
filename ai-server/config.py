@@ -21,7 +21,9 @@ REQUIRED_COLUMNS = [
     "MO",
     "DY",
     "HR",
-    "WS10M"
+    "WS10M",
+    "WD10M",
+    "T2M"
 ]
 
 STEP = 48

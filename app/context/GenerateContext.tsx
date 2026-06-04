@@ -11,7 +11,7 @@ interface GenerateState {
 
 interface GenerateContextValue {
   generate: GenerateState;
-  startGenerate: (model: string, onDone?: (nlp: string) => void) => void;
+  startGenerate: (model: string, onDone?: (nlp: string) => void, selectedVar?: string) => void;
 }
 
 const DEFAULT: GenerateState = {
@@ -75,12 +75,15 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
 
   const startGenerate = useCallback(async (
     selectedModel: string,
-    onDone?: (nlp: string) => void
+    onDone?: (nlp: string) => void,
+    selectedVar: string = "WS10M",
   ) => {
+    console.log("selectedVar dikirim:", selectedVar);  // ← tambah
     setGenerate({ ...DEFAULT, visible: true });
     try {
       const formData = new FormData();
       formData.append("model", selectedModel);
+      formData.append("selected_var", selectedVar);
       const endpoint = selectedModel === "best" ? "/api/generate-best" : "/api/generate";
       const res = await fetch(endpoint, { method: "POST", body: formData });
       const data = await res.json();

@@ -16,6 +16,9 @@ from routes.upload import upload_bp
 from routes.generate import generate_bp
 from routes.auth import auth_bp
 from routes.history import history_bp
+from routes.cache_settings import (
+    cache_settings_bp
+)
 
 # =========================
 # UTILS
@@ -75,6 +78,8 @@ app.register_blueprint(generate_bp)
 app.register_blueprint(auth_bp)
 
 app.register_blueprint(history_bp)
+
+app.register_blueprint(cache_settings_bp)
 
 # =========================
 # LOAD DATASET

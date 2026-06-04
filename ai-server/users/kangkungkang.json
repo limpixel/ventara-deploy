@@ -4,7 +4,7 @@
   "password": "masukin123",
   "role": "user",
   "name": "nailajah69",
-  "active_dataset": "C:\\xampp\\htdocs\\pltb-brin\\ai-server\\uploads\\NASA_Bawean_Hourly.csv",
+  "active_dataset": "C:\\xampp\\htdocs\\pltb-brin\\ai-server\\uploads\\NASA_Sukabumi_Hourly.csv",
   "history": [
     {
       "entry": {
@@ -77,5 +77,5 @@
   ],
   "lastLogin": "2026-06-03T09:47:36.270022+00:00",
   "lastLogout": "2026-06-03T11:05:33.163321+00:00",
-  "storageLimitMb": 15
+  "storageLimitMb": 10
 }

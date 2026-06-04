@@ -85,6 +85,31 @@ def load_or_compute_metrics(
     # =========================
     # LOAD CACHE
     # =========================
+    from utils.cache_settings import (
+        get_cache_settings
+    )
+    
+    settings = get_cache_settings()
+    
+    if not settings["metrics_cache"]:
+
+        print("⚠️ Metrics cache disabled")
+
+        return compute_metrics_fresh(
+            ML_READY,
+            DL_READY,
+            gbr,
+            xgb,
+            knn,
+            scaler,
+            X,
+            y,
+            X_scaled,
+            scaler_y,
+            lstm,
+            bilstm
+        )
+        
     if os.path.exists(cache_path):
 
         try:

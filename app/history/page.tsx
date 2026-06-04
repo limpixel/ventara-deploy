@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
+import { useStorage } from "@/app/context/StorageContext";
 
 type AlgoKey = "BI-LSTM" | "XGB-LSTM" | "LSTM" | "XGBoost";
 type StatusKey = "Selesai" | "Error" | "Berjalan";
@@ -55,44 +56,46 @@ export default function HistorisPage() {
     usage_mb: 0,
     limit_mb: 10,
     percent: 0,
-    admin_limit_mb: null as number | null,
   });
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [selectedTier, setSelectedTier] = useState("basic");
+  const [selectedTier, setSelectedTier] =
+  useState<"basic" | "pro" | "business">("basic");
 
-  useEffect(() => {
-    async function fetchHistory() {
-      try {
-        const username = sessionStorage.getItem("ventara_username") || "";
-        const res = await fetch(`/api/get-history?username=${username}`);
-        const json = await res.json();
-        setData(Array.isArray(json) ? json : []);
-      } catch (error) {
-        console.error("Failed to fetch history:", error);
-      }
+useEffect(() => {
+  async function fetchHistory() {
+    try {
+      const username = sessionStorage.getItem("ventara_username") || "";
+      const res = await fetch(`/api/get-history?username=${username}`);
+      const json = await res.json();
+      setData(Array.isArray(json) ? json : []);
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
     }
+  }
 
-    async function fetchStorage() {
-      try {
-        const username = sessionStorage.getItem("ventara_username") || "";
+  async function fetchStorage() {
+    try {
+      const username = sessionStorage.getItem("ventara_username") || "";
 
-        const res = await fetch(`/api/storage-info?username=${username}`);
+      const res = await fetch(
+        `/api/storage-info?username=${username}`
+      );
 
-        const json = await res.json();
+      const json = await res.json();
 
-        console.log("HISTORY JSON =", json);
+      console.log("HISTORY JSON =", json);
 
-        if (json.success) {
-          setStorageInfo(json);
-        }
-      } catch (error) {
-        console.error("Failed to fetch storage:", error);
+      if (json.success) {
+        setStorageInfo(json);
       }
+    } catch (error) {
+      console.error("Failed to fetch storage:", error);
     }
+  }
 
-    fetchHistory();
-    fetchStorage();
-  }, []);
+  fetchHistory();
+  fetchStorage();
+}, []);;
 
   // ganti DUMMY_DATA jadi data
 
@@ -169,47 +172,35 @@ export default function HistorisPage() {
               </div>
             </div>
 
-            {/* Storage Bar */}
-            <div className="bg-white border border-gray-200 rounded-xl px-5 py-3.5 mb-5 flex items-center gap-4">
-              <div className="flex-1">
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-xs text-gray-500">
-                    Penggunaan Penyimpanan —{" "}
-                    <span className="font-semibold text-gray-700 capitalize">
-                      {storageInfo.tier}
-                    </span>
-                    {storageInfo.admin_limit_mb != null && (
-                      <span className="ml-2 text-[#00a991] font-medium">
-                        (Batas Admin: {storageInfo.admin_limit_mb} MB)
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {storageInfo.usage_mb.toFixed(2)} /{" "}
-                    {storageInfo.limit_mb.toFixed(2)} MB (
-                    {storageInfo.percent.toFixed(1)}%)
-                  </span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${
-                      storageInfo.percent >= 90
-                        ? "bg-red-500"
-                        : storageInfo.percent >= 70
-                          ? "bg-amber-400"
-                          : "bg-teal-500"
-                    }`}
-                    style={{ width: `${Math.min(storageInfo.percent, 100)}%` }}
-                  />
-                </div>
+          {/* Storage Bar */}
+          <div className="bg-white border border-gray-200 rounded-xl px-5 py-3.5 mb-5 flex items-center gap-4">
+            <div className="flex-1">
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs text-gray-500">
+                  Penggunaan Penyimpanan —{" "}
+                  <span className="font-semibold text-gray-700 capitalize">{storageInfo.tier}</span>
+                </span>
+                <span className="text-xs text-gray-500">
+                  {storageInfo.usage_mb.toFixed(2)} / {storageInfo.limit_mb.toFixed(2)} MB ({storageInfo.percent.toFixed(1)}%)
+                </span>
               </div>
-              <button
-                onClick={() => setShowUpgradeModal(true)}
-                className="text-sm text-teal-600 font-medium hover:text-teal-700 whitespace-nowrap border border-teal-200 px-4 py-2 rounded-xl hover:bg-teal-50 transition"
-              >
-                Upgrade (Gratis)
-              </button>
+              <div className="w-full bg-gray-100 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${
+                    storageInfo.percent >= 90 ? "bg-red-500" :
+                    storageInfo.percent >= 70 ? "bg-amber-400" : "bg-teal-500"
+                  }`}
+                  style={{ width: `${Math.min(storageInfo.percent, 100)}%` }}
+                />
+              </div>
             </div>
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              className="text-sm text-teal-600 font-medium hover:text-teal-700 whitespace-nowrap border border-teal-200 px-4 py-2 rounded-xl hover:bg-teal-50 transition"
+            >
+              Upgrade (Gratis)
+            </button>
+          </div>
 
             {/* Table */}
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -490,90 +481,58 @@ export default function HistorisPage() {
                 </span>
               </p>
 
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                {[
-                  {
-                    key: "basic",
-                    label: "Basic",
-                    mb: "100.00 MB",
-                    price: "Rp 29.000 / bulan",
-                  },
-                  {
-                    key: "pro",
-                    label: "Pro",
-                    mb: "500.00 MB",
-                    price: "Rp 99.000 / bulan",
-                  },
-                  {
-                    key: "business",
-                    label: "Business",
-                    mb: "2048.00 MB",
-                    price: "Rp 299.000 / bulan",
-                  },
-                ].map((tier) => (
-                  <div
-                    key={tier.key}
-                    onClick={() => setSelectedTier(tier.key)}
-                    className={`cursor-pointer border-2 rounded-xl p-4 transition ${
-                      selectedTier === tier.key
-                        ? "border-teal-400 bg-teal-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold text-gray-800">
-                        {tier.label}
-                      </span>
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                        Bayar
-                      </span>
-                    </div>
-                    <p className="text-xl font-bold text-gray-900">{tier.mb}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{tier.price}</p>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              {[
+                { key: "basic", label: "Basic", mb: "100.00 MB", price: "Rp 29.000 / bulan" },
+                { key: "pro", label: "Pro", mb: "500.00 MB", price: "Rp 99.000 / bulan" },
+                { key: "business", label: "Business", mb: "2048.00 MB", price: "Rp 299.000 / bulan" },
+              ].map((tier) => (
+                <div
+                  key={tier.key}
+                  onClick={() => setSelectedTier(tier.key)}
+                  className={`cursor-pointer border-2 rounded-xl p-4 transition ${
+                    selectedTier === tier.key
+                      ? "border-teal-400 bg-teal-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-semibold text-gray-800">{tier.label}</span>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Bayar</span>
                   </div>
-                ))}
-              </div>
-
-              <button
-                onClick={async () => {
-                  const username =
-                    sessionStorage.getItem("ventara_username") || "";
-                  await fetch("http://localhost:5000/upgrade_tier", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-Username": username,
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({ tier: selectedTier }),
-                  });
-                  setShowUpgradeModal(false);
-                  // refresh storage info
-                  const res = await fetch(
-                    "http://localhost:5000/storage_info",
-                    {
-                      headers: { "X-Username": username },
-                      credentials: "include",
-                    },
-                  );
-                  const json = await res.json();
-                  if (json.success) setStorageInfo(json);
-                }}
-                className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition capitalize"
-              >
-                Upgrade ke {selectedTier} —{" "}
-                {
-                  {
-                    basic: "Rp 29.000",
-                    pro: "Rp 99.000",
-                    business: "Rp 299.000",
-                  }[selectedTier]
-                }
-                /bulan
-              </button>
+                  <p className="text-xl font-bold text-gray-900">{tier.mb}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{tier.price}</p>
+                </div>
+              ))}
             </div>
+
+            <button
+              onClick={async () => {
+                const username = sessionStorage.getItem("ventara_username") || "";
+                await fetch("http://localhost:5000/upgrade_tier", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "X-Username": username },
+                  credentials: "include",
+                  body: JSON.stringify({ tier: selectedTier }),
+                });
+                setShowUpgradeModal(false);
+                // refresh storage info
+                const res = await fetch("http://localhost:5000/storage_info", {
+                  headers: { "X-Username": username },
+                  credentials: "include",
+                });
+                const json = await res.json();
+                if (json.success) setStorageInfo(json);
+              }}
+              className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition capitalize"
+            >
+              Upgrade ke {selectedTier} — {
+                { basic: "Rp 29.000", pro: "Rp 99.000", business: "Rp 299.000" }[selectedTier]
+              }/bulan
+            </button>
           </div>
-        )}
+        </div>
+      )}
       </main>
     </div>
   );
