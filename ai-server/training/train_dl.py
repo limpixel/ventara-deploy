@@ -8,11 +8,14 @@ from sklearn.preprocessing import MinMaxScaler
 from config import (
     MODEL_FOLDER,
     TARGET,
-    STEP
+    STEP,
+    TRAIN_VARS
 )
 
-def train_dl_models(df):
-
+def train_dl_models(df, target_var: str = None):
+    if target_var is None:
+        target_var = TARGET
+        
     try:
 
         import tensorflow as tf
@@ -29,11 +32,12 @@ def train_dl_models(df):
         from tensorflow.keras.callbacks import (
             EarlyStopping
         )
+        
+        if target_var not in df.columns:
+            print(f"⚠️ Kolom {target_var} tidak ada di dataset, skip DL")
+            return False
 
-        dl_cols = [
-            c for c in df.columns
-            if c != TARGET
-        ]
+        dl_cols = [c for c in df.columns if c != target_var]
 
         scaler_X = MinMaxScaler()
         scaler_y = MinMaxScaler()
@@ -43,7 +47,7 @@ def train_dl_models(df):
         ).astype(np.float32)
 
         y_scaled = scaler_y.fit_transform(
-            df[TARGET].values.reshape(-1, 1)
+            df[target_var].values.reshape(-1, 1)
         ).astype(np.float32)
 
         seqs = []
@@ -76,6 +80,7 @@ def train_dl_models(df):
             patience=5,
             restore_best_weights=True
         )
+        suffix = f"_{target_var}"
 
         # =========================
         # LSTM
@@ -104,7 +109,7 @@ def train_dl_models(df):
         )
 
         lstm.save(
-            f"{MODEL_FOLDER}/lstm.h5"
+            f"{MODEL_FOLDER}/lstm{suffix}.h5"
         )
 
         # =========================
@@ -141,24 +146,29 @@ def train_dl_models(df):
         )
 
         bilstm.save(
-            f"{MODEL_FOLDER}/bilstm.h5"
+            f"{MODEL_FOLDER}/bilstm{suffix}.h5"
         )
 
         joblib.dump(
             scaler_X,
-            f"{MODEL_FOLDER}/scaler_X.pkl"
+            f"{MODEL_FOLDER}/scaler_X{suffix}.pkl"
         )
 
         joblib.dump(
             scaler_y,
-            f"{MODEL_FOLDER}/scaler_y.pkl"
+            f"{MODEL_FOLDER}/scaler_y{suffix}.pkl"
         )
+        joblib.dump(
+            dl_cols,
+            f"{MODEL_FOLDER}/dl_cols{suffix}.pkl"
+            )
 
+        print(f"✅ DL training selesai untuk {target_var}")
         return True
 
     except Exception as e:
 
-        print(f"⚠️ DL training gagal: {e}")
+        print(f"⚠️ DL training gagal untuk {target_var}: {e}")
 
         traceback.print_exc()
 

@@ -20,7 +20,7 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-  const [avatar, setAvatar] = useState("/icon/Freak-nail.jpg");
+  const [avatar, setAvatar] = useState("/icon/default-avatar-profile.jpg");
 
   const isMoreActive = pathname === "/history" || pathname === "/settings";
 
@@ -30,6 +30,7 @@ export default function Sidebar() {
     const savedAvatar = sessionStorage.getItem("ventara_avatar"); // ← tambah
     if (savedRole) setRole(savedRole);
     if (savedName) setName(savedName);
+    if (savedAvatar && savedAvatar !== "null") setAvatar(savedAvatar);
     if (pathname === "/history" || pathname === "/settings") setOpen(true);
   }, [pathname]);
 
@@ -227,7 +228,7 @@ export default function Sidebar() {
           className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-50 transition-colors"
         >
           <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden shrink-0">
-            <img src={avatar} className="w-full h-full object-cover" alt="" />
+            <img src={avatar} className="w-full h-full object-cover object-top border-2 border-teal-500 rounded-full" alt="" />
           </div>
           <div className="flex-1 text-left min-w-0">
             <p className="text-xs text-gray-400 capitalize">{role === "admin" ? "Administrator" : "User Analitik"}</p>

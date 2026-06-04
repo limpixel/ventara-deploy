@@ -8,6 +8,8 @@ ARCHIVE_FOLDER = "uploads/archive"
 ALLOWED_EXTENSIONS = {"csv"}
 
 TARGET = "WS10M"
+TRAIN_VARS = ["WS10M", "WD10M", "T2M"]
+
 
 DEFAULT_DATASET = "Dataset/NASA Bawean Hourly.csv"
 

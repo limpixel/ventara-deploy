@@ -12,7 +12,8 @@ from config import MODEL_FOLDER
 def train_ml_models(
     X,
     y,
-    features
+    features,
+    suffix=""
 ):
 
     # =========================
@@ -29,7 +30,7 @@ def train_ml_models(
 
     joblib.dump(
         gbr,
-        f"{MODEL_FOLDER}/gbr.pkl"
+       f"{MODEL_FOLDER}/gbr{suffix}.pkl"
     )
 
     # =========================
@@ -47,7 +48,7 @@ def train_ml_models(
 
     joblib.dump(
         xgb,
-        f"{MODEL_FOLDER}/xgb.pkl"
+        f"{MODEL_FOLDER}/xgb{suffix}.pkl"
     )
 
     # =========================
@@ -66,17 +67,17 @@ def train_ml_models(
 
     joblib.dump(
         knn,
-        f"{MODEL_FOLDER}/knn.pkl"
+        f"{MODEL_FOLDER}/knn{suffix}.pkl"
     )
 
     joblib.dump(
         scaler,
-        f"{MODEL_FOLDER}/scaler.pkl"
+        f"{MODEL_FOLDER}/scaler{suffix}.pkl"
     )
 
     joblib.dump(
         features,
-        f"{MODEL_FOLDER}/features.pkl"
+        f"{MODEL_FOLDER}/features{suffix}.pkl"
     )
 
     return (
