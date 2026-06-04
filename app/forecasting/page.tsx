@@ -61,7 +61,7 @@ export default function ForecastingPage() {
     sessionStorage.setItem(`ventara_nlp_report_${username}`, nlpReport as string);
   }
 
-  const ALL_VARS = ["T2M", "WS10M", "WD10M"];
+  const ALL_VARS = ["RH2M", "WS10M", "WD10M"];
   const [selectedVars, setSelectedVars] = useState("WS10M");
 
   return (

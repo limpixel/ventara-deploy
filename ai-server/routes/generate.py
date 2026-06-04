@@ -94,11 +94,18 @@ def _worker_generate_full(username: str, selected_model: str, active_models: lis
     from training.load_dl import load_dl_for_var
     
     gbr, xgb, knn, scaler, FEATURES = load_ml_for_var(selected_var)
+    print("ML FEATURES =", FEATURES)
     ML_READY = all([gbr is not None, xgb is not None, knn is not None, scaler is not None, len(FEATURES) > 0])
     X = np.array(df[FEATURES].values) if ML_READY else np.array([])
     
     # Load DL sesuai selected_var
     dl_state = load_dl_for_var(df, selected_var)
+    
+    print("=" * 50)
+    print("🚀 WORKER START")
+    print("SELECTED VAR =", selected_var)
+    print("DATASET COLS =", df.columns.tolist())
+    print("=" * 50)
     
     DL_READY      = dl_state["DL_READY"]
     lstm          = dl_state["lstm"]
@@ -107,6 +114,7 @@ def _worker_generate_full(username: str, selected_model: str, active_models: lis
     scaler_y      = dl_state["scaler_y"]
     X_scaled      = dl_state["X_scaled"]
     DL_INPUT_COLS = dl_state["DL_INPUT_COLS"]
+    print("DL INPUT COLS =", DL_INPUT_COLS)
     
     try:
         np.random.seed(42)
@@ -152,6 +160,8 @@ def _worker_generate_full(username: str, selected_model: str, active_models: lis
                 
         future_steps  = 24 * 7
         target_series = df[selected_var].tolist()
+        print("TARGET COLUMN FOUND =", selected_var)
+        print("FIRST VALUE =", target_series[0] if len(target_series) else "EMPTY")
         last_row_dict = df.iloc[-1].to_dict()
         last_time     = pd.Timestamp(
             year=int(last_row_dict["YEAR"]), month=int(last_row_dict["MO"]),
