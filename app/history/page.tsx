@@ -490,7 +490,7 @@ useEffect(() => {
               ].map((tier) => (
                 <div
                   key={tier.key}
-                  onClick={() => setSelectedTier(tier.key)}
+                  onClick={() => setSelectedTier(tier.key as "basic" | "pro" | "business")}
                   className={`cursor-pointer border-2 rounded-xl p-4 transition ${
                     selectedTier === tier.key
                       ? "border-teal-400 bg-teal-50"
