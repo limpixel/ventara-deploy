@@ -5,8 +5,8 @@ export async function GET(req: NextRequest) {
   const lng = req.nextUrl.searchParams.get("lng");
 
   // Hardcode sementara untuk test
-  const clientId = "JBovq7TP7N6HlJag1yqNn";
-  const clientSecret = "tw1JdQhj4koCl9e1RhFmWeMEntNKUxeIpn5Po4Za";
+  const clientId = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_ID;
+  const clientSecret = process.env.NEXT_PUBLIC_XWEATHER_CLIENT_SECRET;
 
   const url = `https://api.xweather.com/forecasts/${lat},${lng}?client_id=${clientId}&client_secret=${clientSecret}&filter=day&limit=7&units=metric`;
 
