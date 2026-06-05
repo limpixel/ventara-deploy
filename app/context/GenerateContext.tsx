@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useRef, useState, useCallback } from "react";
+import { PYTHON_API_URL } from "@/app/lib/api";
 
 interface GenerateState {
   visible: boolean;
@@ -53,7 +54,7 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
         setGenerate(prev => ({ ...prev, percent: 100 }));
 
         // ✅ generate_commit tetap ke-trigger meski pindah page
-        await fetch("http://localhost:5000/generate_commit", {
+        await fetch(`${PYTHON_API_URL}/generate_commit`, {
           method: "POST",
           credentials: "include",
         });

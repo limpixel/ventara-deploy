@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
 import { useStorage } from "@/app/context/StorageContext";
+import { PYTHON_API_URL } from "@/app/lib/api";
 
 type AlgoKey = "BI-LSTM" | "XGB-LSTM" | "LSTM" | "XGBoost";
 type StatusKey = "Selesai" | "Error" | "Berjalan";
@@ -509,7 +510,7 @@ useEffect(() => {
             <button
               onClick={async () => {
                 const username = sessionStorage.getItem("ventara_username") || "";
-                await fetch("http://localhost:5000/upgrade_tier", {
+                await fetch(`${PYTHON_API_URL}/upgrade_tier`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json", "X-Username": username },
                   credentials: "include",
@@ -517,7 +518,7 @@ useEffect(() => {
                 });
                 setShowUpgradeModal(false);
                 // refresh storage info
-                const res = await fetch("http://localhost:5000/storage_info", {
+                const res = await fetch(`${PYTHON_API_URL}/storage_info`, {
                   headers: { "X-Username": username },
                   credentials: "include",
                 });

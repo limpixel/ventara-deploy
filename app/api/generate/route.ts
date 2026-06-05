@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const PYTHON_API = process.env.PYTHON_API_URL || "http://127.0.0.1:5000";
+
 export async function POST(req: NextRequest) {
 
   const cookie = req.headers.get("cookie") || "";
@@ -7,7 +9,7 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
 
   const res = await fetch(
-    "http://127.0.0.1:5000/generate_full",
+    `${PYTHON_API}/generate_full`,
     {
       method: "POST",
       headers: {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
+import { PYTHON_API_URL } from "@/app/lib/api";
 
 const DEFAULT_AVATAR = "/icon/default-avatar-profile.jpg";
 
@@ -35,7 +36,7 @@ export default function EditProfilePage() {
     setSaving(true);
     setSaveMsg("");
     try {
-      const res = await fetch("http://localhost:5000/update_profile", {
+      const res = await fetch(`${PYTHON_API_URL}/update_profile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -73,7 +74,7 @@ export default function EditProfilePage() {
   setSavingPassword(true);
   setPasswordMsg("");
   try {
-    const res = await fetch("http://localhost:5000/change_password", {
+    const res = await fetch(`${PYTHON_API_URL}/change_password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

@@ -39,11 +39,15 @@ export function StorageProvider({
   const refreshStorage = async () => {
     try {
       const username =
-        sessionStorage.getItem("ventara_username") || "";
+        sessionStorage.getItem("ventara_username");
+
+      if (!username) return;
 
       const res = await fetch(
         `/api/storage-info?username=${username}`
       );
+
+      if (!res.ok) return;
 
       const json = await res.json();
 

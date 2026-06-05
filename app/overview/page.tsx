@@ -8,6 +8,7 @@ import ForecastChart from "@/app/components/overview/ForecastChart";
 import NLPResult from "@/app/components/upload/NLPResult";
 import { useEffect, useState } from "react";
 import { useMetrics } from "@/app/hooks/useMetrics";
+import { PYTHON_API_URL } from "@/app/lib/api";
 
 export default function OverviewPage() {
   const [nlpReport, setNlpReport] = useState("");
@@ -25,7 +26,7 @@ export default function OverviewPage() {
     if (savedReport) setNlpReport(savedReport);
     if (savedMode) setGenerateMode(savedMode as "general" | "best");
 
-    fetch("http://localhost:5000/overview_data", {
+    fetch(`${PYTHON_API_URL}/overview_data`, {
       credentials: "include",
     })
       .then((res) => res.json())

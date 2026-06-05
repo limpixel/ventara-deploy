@@ -1,6 +1,7 @@
 "use client";
 
 import toast from "react-hot-toast";
+import { PYTHON_API_URL } from "@/app/lib/api";
 
 interface SaveHistoryPayload {
   file: string;
@@ -38,7 +39,7 @@ export function useSaveHistory() {
       };
 
       const username = sessionStorage.getItem("ventara_username");
-      const res = await fetch("http://localhost:5000/save_history", {
+      const res = await fetch(`${PYTHON_API_URL}/save_history`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

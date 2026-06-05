@@ -15,6 +15,8 @@ import {
   getTodayKey
 } from '@/app/services/adminHelpers';
 
+import { PYTHON_API_URL } from '@/app/lib/api';
+
 const getSampleUsageLogs = (): UsageLog[] => {
   const logs: UsageLog[] = [];
   const users = ['Administrator', 'kakang_kukung', 'joko_wind'];
@@ -103,7 +105,7 @@ useEffect(() => {
     try {
 
       const res = await fetch(
-        'http://localhost:5000/users'
+        `${PYTHON_API_URL}/users`
       );
 
       const data = await res.json();
@@ -150,7 +152,7 @@ useEffect(() => {
   const fetchLoginCount = async () => {
     try {
       const res = await fetch(
-        'http://localhost:5000/login-count'
+        `${PYTHON_API_URL}/login-count`
       );
       const data = await res.json();
       setLoginCountToday(data.count);
@@ -388,7 +390,7 @@ const updateUserResourceLimit = (
   // Save to Flask server
   const username = users.find(u => u.id === userId)?.username;
   if (username) {
-    fetch('http://localhost:5000/user-data/' + username, {
+    fetch(`${PYTHON_API_URL}/user-data/${username}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -465,7 +467,7 @@ const activateUser = async (
   const username = users.find(u => u.id === userId)?.username;
   if (!username) return;
   try {
-    await fetch('http://localhost:5000/user-data/' + username, {
+    await fetch(`${PYTHON_API_URL}/user-data/${username}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isActive: active }),
@@ -482,7 +484,7 @@ const activateUser = async (
 
 const fetchUserData = async (username: string): Promise<{ resourceLimits?: Record<string, { maxStorageMb: number }>; history?: any[]; storageLimitMb?: number } | null> => {
   try {
-    const res = await fetch('http://localhost:5000/user-data/' + username);
+    const res = await fetch(`${PYTHON_API_URL}/user-data/${username}`);
     if (!res.ok) return null;
     return await res.json();
   } catch (_) {
@@ -492,7 +494,7 @@ const fetchUserData = async (username: string): Promise<{ resourceLimits?: Recor
 
 const updateUserStorageLimit = async (username: string, mb: number): Promise<boolean> => {
   try {
-    const res = await fetch('http://localhost:5000/user-data/' + username, {
+    const res = await fetch(`${PYTHON_API_URL}/user-data/${username}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ storageLimitMb: mb }),

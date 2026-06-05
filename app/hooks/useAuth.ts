@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { PYTHON_API_URL } from '@/app/lib/api';
 
 export type AuthView = 'landing' | 'register' | 'login';
 
@@ -17,7 +18,7 @@ export function useAuth() {
     // token: string
 ) => {
   try {
-    const res = await fetch("http://localhost:5000/login", {
+    const res = await fetch(`${PYTHON_API_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -73,7 +74,7 @@ export function useAuth() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/register", {
+      const res = await fetch(`${PYTHON_API_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password, name: username }),

@@ -61,7 +61,7 @@ export default function LoginForm({
           //   return;
           // }
 
-          onLogin(username, password, );
+          onLogin(username, password);
         }}
         className="relative z-10 w-full max-w-140"
       >
@@ -75,10 +75,14 @@ export default function LoginForm({
             WELCOME BACK{" "}
             <span className="inline-block w-16 h-2 rounded-full mb-4 bg-white" />
           </span>
-          <span className="block text-[50px]">ENTER YOUR EMAIL TO GET STARTED</span>
+          <span className="block text-[50px]">
+            ENTER YOUR EMAIL TO GET STARTED
+          </span>
         </h1>
-        <p className={`
-         ${poppins.className}text-sm text-white/65 mb-10`}>
+        <p
+          className={`
+         ${poppins.className}text-sm text-white/65 mb-10`}
+        >
           Sign in to access your dashboard and continue forecasting wind energy.
         </p>
 
@@ -89,7 +93,7 @@ export default function LoginForm({
           </label>
           <div className="relative">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 z-10">
-              <User className="w-4 h-4"/>
+              <User className="w-4 h-4" />
             </div>
             <input
               type="text"
@@ -171,7 +175,7 @@ export default function LoginForm({
             Forgot Password?
           </button>
         </div>
-{/*         
+        {/*         
         <div className="mb-6 flex justify-center">
           <div className="scale-110 origin-center">
             <ReCAPTCHA

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { PYTHON_API_URL } from "@/app/lib/api";
 
 import { Bebas_Neue } from "next/font/google";
 
@@ -54,7 +55,7 @@ export default function Sidebar() {
     setProfileOpen(false);
 
     try {
-      await fetch("http://localhost:5000/logout", {
+      await fetch(`${PYTHON_API_URL}/logout`, {
         method: "POST",
         credentials: "include",
       });
