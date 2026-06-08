@@ -5,6 +5,7 @@ import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
 import { useStorage } from "@/app/context/StorageContext";
 import { PYTHON_API_URL } from "@/app/lib/api";
+import PaymentModal from "@/app/components/PaymentModal";
 
 type AlgoKey = "BI-LSTM" | "XGB-LSTM" | "LSTM" | "XGBoost";
 type StatusKey = "Selesai" | "Error" | "Berjalan";
@@ -61,6 +62,7 @@ export default function HistorisPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedTier, setSelectedTier] =
   useState<"basic" | "pro" | "business">("basic");
+  const [paymentTier, setPaymentTier] = useState<"basic" | "pro" | "business" | null>(null);
 
 useEffect(() => {
   async function fetchHistory() {
@@ -484,8 +486,8 @@ useEffect(() => {
 
             <div className="grid grid-cols-2 gap-3 mb-5">
               {[
-                { key: "basic", label: "Basic", mb: "100.00 MB", price: "Rp 29.000 / bulan" },
-                { key: "pro", label: "Pro", mb: "500.00 MB", price: "Rp 99.000 / bulan" },
+                { key: "basic", label: "Basic", mb: "100.00 MB", price: "Rp 2.000 / bulan" },
+                
                 { key: "business", label: "Business", mb: "2048.00 MB", price: "Rp 299.000 / bulan" },
               ].map((tier) => (
                 <div
@@ -508,31 +510,31 @@ useEffect(() => {
             </div>
 
             <button
-              onClick={async () => {
-                const username = sessionStorage.getItem("ventara_username") || "";
-                await fetch(`${PYTHON_API_URL}/upgrade_tier`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", "X-Username": username },
-                  credentials: "include",
-                  body: JSON.stringify({ tier: selectedTier }),
-                });
-                setShowUpgradeModal(false);
-                // refresh storage info
-                const res = await fetch(`${PYTHON_API_URL}/storage_info`, {
-                  headers: { "X-Username": username },
-                  credentials: "include",
-                });
-                const json = await res.json();
-                if (json.success) setStorageInfo(json);
-              }}
+              onClick={() => setPaymentTier(selectedTier)}
               className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition capitalize"
             >
               Upgrade ke {selectedTier} — {
-                { basic: "Rp 29.000", pro: "Rp 99.000", business: "Rp 299.000" }[selectedTier]
+                { basic: "Rp 2.000", pro: "Rp 99.000", business: "Rp 299.000" }[selectedTier]
               }/bulan
             </button>
           </div>
         </div>
+      )}
+      {paymentTier && (
+        <PaymentModal
+          tier={paymentTier}
+          onClose={() => { setPaymentTier(null); setShowUpgradeModal(false); }}
+          onSuccess={() => {
+            const username = sessionStorage.getItem("ventara_username") || "";
+            fetch(`${PYTHON_API_URL}/storage_info`, {
+              headers: { "X-Username": username }, credentials: "include",
+            }).then(r => r.json()).then(json => {
+              if (json.success) setStorageInfo(json);
+            });
+            setPaymentTier(null);
+            setShowUpgradeModal(false);
+          }}
+        />
       )}
       </main>
     </div>
