@@ -72,8 +72,7 @@ export default function OverviewHeader({
 
             <div className="grid grid-cols-2 gap-3 mb-5">
               {[
-                { key: "basic",    label: "Basic",    mb: "100.00 MB", price: "Rp 29.000 / bulan" },
-                { key: "pro",      label: "Pro",      mb: "500.00 MB", price: "Rp 99.000 / bulan" },
+                { key: "basic",    label: "Basic",    mb: "100.00 MB", price: "Rp1.500 / bulan" },
                 { key: "business", label: "Business", mb: "2048.00 MB", price: "Rp 299.000 / bulan" },
               ].map((tier) => (
                 <div
