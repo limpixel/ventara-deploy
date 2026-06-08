@@ -61,8 +61,23 @@ export default function HistorisPage() {
   });
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedTier, setSelectedTier] =
-  useState<"basic" | "pro" | "business">("basic");
-  const [paymentTier, setPaymentTier] = useState<"basic" | "pro" | "business" | null>(null);
+  useState<"basic" | "business">("basic");
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
+  const [paymentTier, setPaymentTier] = useState<"basic" | "business" | null>(null);
+
+  const TIER_ORDER = { basic: 1, business: 2 }
+
+  function isTierOwned(tier: string) {
+    return TIER_ORDER[tier as keyof typeof TIER_ORDER] <= TIER_ORDER[storageInfo.tier as keyof typeof TIER_ORDER]
+  }
+
+  function getTierExpiry(tier: string): Date | null {
+    const record = [...paymentHistory].reverse().find(p => p.tier === tier)
+    if (!record) return null
+    const expiry = new Date(record.paid_at)
+    expiry.setDate(expiry.getDate() + 30)
+    return expiry
+  }
 
 useEffect(() => {
   async function fetchHistory() {
@@ -96,8 +111,19 @@ useEffect(() => {
     }
   }
 
+  async function fetchPaymentHistory() {
+    const username = sessionStorage.getItem("ventara_username") || ""
+    if (!username) return
+    try {
+      const res = await fetch(`/api/payment/history?username=${username}`)
+      const json = await res.json()
+      if (json.success) setPaymentHistory(json.data)
+    } catch {}
+  }
+
   fetchHistory();
   fetchStorage();
+  fetchPaymentHistory();
 }, []);;
 
   // ganti DUMMY_DATA jadi data
@@ -487,36 +513,54 @@ useEffect(() => {
             <div className="grid grid-cols-2 gap-3 mb-5">
               {[
                 { key: "basic", label: "Basic", mb: "100.00 MB", price: "Rp 2.000 / bulan" },
-                
                 { key: "business", label: "Business", mb: "2048.00 MB", price: "Rp 299.000 / bulan" },
-              ].map((tier) => (
+              ].map((tier) => {
+                const owned = isTierOwned(tier.key)
+                const expiry = getTierExpiry(tier.key)
+                const isCurrent = tier.key === storageInfo.tier
+                return (
                 <div
                   key={tier.key}
-                  onClick={() => setSelectedTier(tier.key as "basic" | "pro" | "business")}
-                  className={`cursor-pointer border-2 rounded-xl p-4 transition ${
-                    selectedTier === tier.key
-                      ? "border-teal-400 bg-teal-50"
-                      : "border-gray-200 hover:border-gray-300"
+                  onClick={() => !owned && setSelectedTier(tier.key as "basic" | "business")}
+                  className={`border-2 rounded-xl p-4 transition ${
+                    owned
+                      ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+                      : selectedTier === tier.key
+                        ? "border-teal-400 bg-teal-50 cursor-pointer"
+                        : "border-gray-200 hover:border-gray-300 cursor-pointer"
                   }`}
                 >
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-semibold text-gray-800">{tier.label}</span>
-                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Bayar</span>
+                    {owned ? (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        {isCurrent ? "Paket Saat Ini" : "Sudah Dibeli"}
+                      </span>
+                    ) : (
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Bayar</span>
+                    )}
                   </div>
                   <p className="text-xl font-bold text-gray-900">{tier.mb}</p>
                   <p className="text-sm text-gray-500 mt-0.5">{tier.price}</p>
+                  {owned && expiry && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Berlaku sampai {expiry.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  )}
                 </div>
-              ))}
+              )})}
             </div>
 
+            {!isTierOwned(selectedTier) && (
             <button
               onClick={() => setPaymentTier(selectedTier)}
               className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition capitalize"
             >
               Upgrade ke {selectedTier} — {
-                { basic: "Rp 2.000", pro: "Rp 99.000", business: "Rp 299.000" }[selectedTier]
+                { basic: "Rp 2.000", business: "Rp 299.000" }[selectedTier]
               }/bulan
             </button>
+            )}
           </div>
         </div>
       )}

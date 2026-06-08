@@ -5,7 +5,7 @@ import { QRCodeCanvas } from "qrcode.react"
 import { PYTHON_API_URL } from "@/app/lib/api"
 
 const TIER_AMOUNT: Record<string, number> = {
-  basic: 1500,
+  basic: 2000,
   business: 299000,
 }
 
