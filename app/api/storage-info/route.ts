@@ -12,24 +12,31 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const res = await fetch(
-    `${PYTHON_API}/storage_info`,
-    {
-      cache: "no-store",
-      headers: {
-        "X-Username": username,
-      },
-    }
-  );
+  try {
+    const res = await fetch(
+      `${PYTHON_API}/storage_info`,
+      {
+        cache: "no-store",
+        headers: {
+          "X-Username": username,
+        },
+      }
+    );
 
-  if (!res.ok) {
+    if (!res.ok) {
+      return NextResponse.json(
+        { success: false, error: "Failed to fetch storage info" },
+        { status: res.status }
+      );
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Storage info fetch error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to fetch storage info" },
-      { status: res.status }
+      { success: false, error: "Internal server error" },
+      { status: 500 }
     );
   }
-
-  const data = await res.json();
-
-  return NextResponse.json(data);
 }
