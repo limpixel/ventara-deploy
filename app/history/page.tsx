@@ -94,13 +94,24 @@ useEffect(() => {
   async function fetchStorage() {
     try {
       const username = sessionStorage.getItem("ventara_username") || "";
+      if (!username) return;
 
       const res = await fetch(
         `/api/storage-info?username=${username}`
       );
 
-      const json = await res.json();
+      if (!res.ok) {
+        console.error("Storage API returned", res.status);
+        return;
+      }
 
+      const text = await res.text();
+      if (!text) {
+        console.error("Empty response from storage API");
+        return;
+      }
+
+      const json = JSON.parse(text);
       console.log("HISTORY JSON =", json);
 
       if (json.success) {
@@ -551,16 +562,19 @@ useEffect(() => {
               )})}
             </div>
 
-            {!isTierOwned(selectedTier) && (
             <button
-              onClick={() => setPaymentTier(selectedTier)}
+              onClick={() => {
+                if (!isTierOwned(selectedTier)) setPaymentTier(selectedTier)
+              }}
               className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition capitalize"
             >
-              Upgrade ke {selectedTier} — {
-                { basic: "Rp 2.000", business: "Rp 299.000" }[selectedTier]
-              }/bulan
+              {isTierOwned(selectedTier)
+                ? `${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} ( Upgrade )`
+                : `Upgrade ke ${selectedTier} — ${
+                    { basic: "Rp 2.000", business: "Rp 299.000" }[selectedTier]
+                  }/bulan`
+              }
             </button>
-            )}
           </div>
         </div>
       )}

@@ -24,7 +24,6 @@ export default function EditProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
-
   useEffect(() => {
     setUsername(sessionStorage.getItem("ventara_username") || "");
     setName(sessionStorage.getItem("ventara_name") || "");
@@ -268,6 +267,8 @@ export default function EditProfilePage() {
                 </button>
               </div>
             </div>
+
+
 
             {/* Save message */}
             {saveMsg && (

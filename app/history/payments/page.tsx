@@ -209,10 +209,10 @@ export default function PaymentHistoryPage() {
                   <span className="w-2 h-2 rounded-full bg-amber-400" />
                   {menunggu} menunggu
                 </span>
-                <span className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3.5 py-1.5 text-gray-700 shadow-sm">
+                {/* <span className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3.5 py-1.5 text-gray-700 shadow-sm">
                   Total bersih:{" "}
                   <span className="font-bold text-gray-900">{formatAmount(totalBersih)}</span>
-                </span>
+                </span> */}
               </div>
             )}
 
