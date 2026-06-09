@@ -19,7 +19,7 @@ import { useGenerateContext } from "@/app/context/GenerateContext";
 export default function ForecastingPage() {
   const [ selectedModel, setSelectedModel] = useState("all");
 
-  const { dataset_name, metrics, best_models, loading } = useMetrics();
+  const { dataset_name, metrics, best_models = [], refreshMetrics } = useMetrics();
 
   const [ generateMode, setGenerateMode] = useState<"general" | "best">("general");
 
@@ -29,14 +29,8 @@ export default function ForecastingPage() {
 
   const [ nlpReport, setNlpReport] = useState("");
 
-  // 1. useEffect
-  useEffect(() => {
-    const username = sessionStorage.getItem("ventara_username");
-    const savedState = sessionStorage.getItem(`ventara_ui_state_${username}`) as "idle" | "loading" | "nlp" | null;
-    const savedReport = sessionStorage.getItem(`ventara_nlp_report_${username}`);
-    if (savedState) setUiState(savedState);
-    if (savedReport) setNlpReport(savedReport);
-  }, []);
+  const ALL_VARS = ["RH2M", "WS10M", "WD10M"];
+  const [selectedVars, setSelectedVars] = useState("WS10M");
 
   async (nlpReport: String) => {
     const username = sessionStorage.getItem("ventara_username");
@@ -59,10 +53,16 @@ export default function ForecastingPage() {
 
     sessionStorage.setItem(`ventara_ui_state_${username}`, "nlp");
     sessionStorage.setItem(`ventara_nlp_report_${username}`, nlpReport as string);
+    sessionStorage.setItem(`ventara_selected_var_${username}`, selectedVars);
   }
 
-  const ALL_VARS = ["RH2M", "WS10M", "WD10M"];
-  const [selectedVars, setSelectedVars] = useState("WS10M");
+  useEffect(() => {
+    const username = sessionStorage.getItem("ventara_username");
+    const savedState = sessionStorage.getItem(`ventara_ui_state_${username}`) as "idle" | "loading" | "nlp" | null;
+    const savedReport = sessionStorage.getItem(`ventara_nlp_report_${username}`);
+    if (savedState) setUiState(savedState);
+    if (savedReport) setNlpReport(savedReport);
+  }, []);
 
   return (
     <div className="flex h-screen">
@@ -86,6 +86,22 @@ export default function ForecastingPage() {
               <p className="text-xs text-teal-600 mt-1 font-medium">
                 Dataset Aktif: {dataset_name}
               </p>
+
+              <div className="flex justify-end">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open("http://localhost:5000/download_template", "_blank");
+                }}
+                className="mt-1 inline-flex items-center gap-1.5 text-sm text-teal-800 hover:text-teal-500 px-3 py-1.5 transition-colors cursor-pointer underline"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Template Dataset
+              </button>
+            </div>
             </div>
 
             {/* STATUS BOX */}
@@ -103,6 +119,7 @@ export default function ForecastingPage() {
                 sessionStorage.removeItem(`ventara_ui_state_${username}`);
                 sessionStorage.removeItem(`ventara_nlp_report_${username}`);
               }}
+              onTrainingComplete={refreshMetrics}
               />
             </div>
 

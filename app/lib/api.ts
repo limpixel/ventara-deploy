@@ -18,3 +18,18 @@ export async function fetchTrainProgress() {
 export function downloadCsv(mode: "general" | "best") {
   window.location.href = `/api/download?mode=${mode}`;
 }
+
+export async function clearTrainProgress() {
+  const res = await fetch(`${PYTHON_API_URL}/clear_training`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return res.json();
+}
+
+export async function cancelTraining() {
+  const res = await fetch("/api/cancel-training", {
+    method: "POST",
+  });
+  return res.json();
+}
