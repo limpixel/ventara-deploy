@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTraining } from "@/app/context/TrainingContext";
-import { PYTHON_API_URL } from "@/app/lib/api";
 
 import { Bebas_Neue } from "next/font/google";
 
@@ -16,7 +15,7 @@ const bebasNeue = Bebas_Neue({
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { stopTraining } = useTraining();
+  const { cancelTraining, stopTraining } = useTraining();
   const [role, setRole] = useState<"user" | "admin">("user");
   const [name, setName] = useState("User");
   const [open, setOpen] = useState(false);
@@ -24,16 +23,16 @@ export default function Sidebar() {
   const profileRef = useRef<HTMLDivElement>(null);
   const [avatar, setAvatar] = useState("/icon/default-avatar-profile.jpg");
 
-  const isMoreActive = pathname === "/history" || pathname === "/history/payments" || pathname === "/settings";
+  const isMoreActive = pathname === "/history" || pathname === "/settings";
 
   useEffect(() => {
     const savedRole = sessionStorage.getItem("ventara_role") as "user" | "admin" | null;
     const savedName = sessionStorage.getItem("ventara_name");
-    const savedAvatar = sessionStorage.getItem("ventara_avatar");
+    const savedAvatar = sessionStorage.getItem("ventara_avatar"); // ← tambah
     if (savedRole) setRole(savedRole);
     if (savedName) setName(savedName);
     if (savedAvatar && savedAvatar !== "null") setAvatar(savedAvatar);
-    if (pathname === "/history" || pathname === "/history/payments" || pathname === "/settings") setOpen(true);
+    if (pathname === "/history" || pathname === "/settings") setOpen(true);
   }, [pathname]);
 
   useEffect(() => {
@@ -49,9 +48,15 @@ export default function Sidebar() {
   async function handleLogout() {
   setProfileOpen(false);
 
-  stopTraining();
+  // Stop toast & cancel training dulu
+  stopTraining(); // langsung hilangkan banner
+  try {
+    await cancelTraining(); // cancel di Flask
+  } catch (e) {
+    console.error("Cancel training on logout failed:", e);
+  }
 
-  await fetch(`${PYTHON_API_URL}/logout`, {
+  await fetch("http://localhost:5000/logout", {
     method: "POST",
     credentials: "include",
   });
@@ -116,7 +121,7 @@ export default function Sidebar() {
                 </svg>
               </button>
 
-              <div className={`overflow-hidden transition-all duration-200 ${open ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className={`overflow-hidden transition-all duration-200 ${open ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}`}>
                <div className="ml-2 mt-2 space-y-1">
                 <Link
                   href="/history"
@@ -136,26 +141,6 @@ export default function Sidebar() {
                     />
                   </svg>
                   History Data
-                </Link>
-
-                <Link
-                  href="/history/payments"
-                  className={subLinkClass("/history/payments")}
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                  Pembayaran
                 </Link>
 
                 <Link
@@ -251,7 +236,7 @@ export default function Sidebar() {
           className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-50 transition-colors"
         >
           <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden shrink-0">
-            <img src={avatar} className="w-full h-full object-cover object-top border-2 border-teal-500 rounded-full" alt="" />
+            <img src={avatar} className="w-full h-full object-cover border-2 border-teal-500 rounded-full" alt="" />
           </div>
           <div className="flex-1 text-left min-w-0">
             <p className="text-xs text-gray-400 capitalize">{role === "admin" ? "Administrator" : "User Analitik"}</p>

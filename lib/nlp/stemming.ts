@@ -109,7 +109,7 @@ function stemByMap(tokens: WeatherToken[], keyFilter: string): StemmedConcept[] 
 // ─── Stemmer kondisi cuaca utama ─────────────────────────────────────────────
 
 function stemWeatherCondition(tokens: WeatherToken[]): StemmedConcept[] {
-  return tokens
+return tokens
     .filter((t) => t.key === "weather_primary")
     .map((t) => {
       const map = TOKEN_CONCEPT_MAP[t.textToken]

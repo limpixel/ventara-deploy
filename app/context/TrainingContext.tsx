@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import {
   fetchTrainProgress,
-  clearTrainProgress,
+clearTrainProgress,
   cancelTraining as cancelTrainingApi,
 } from "@/app/lib/api";
 
@@ -140,7 +140,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
         if (data.running) {
           poll(() => {
-            window.dispatchEvent(new Event("training-complete"));
+            window.dispatchEvent(new Event("training-complete"));  // tetap reload kalau resume dari tab lain
           });
         }
       } catch (err) {
@@ -158,6 +158,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [poll]);
   
   const cancelTraining = useCallback(async () => {
+  // Stop polling dulu biar tidak override state
   if (intervalRef.current) {
     clearInterval(intervalRef.current);
     intervalRef.current = null;
@@ -169,6 +170,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   } catch (e) {
     console.error("Cancel failed:", e);
   } finally {
+    // Reset state apapun yang terjadi
     setTraining(DEFAULT_STATE);
   }
 }, []);
