@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { processWeatherNlp, type PipelineResult } from "@/lib/nlp/pipeline"
+import { calcFixtureAccuracy } from "@/lib/nlp/fixture-accuracy"
 import { ensurePlaceName, normalizePlaceName } from "@/lib/nlp/normalize"
 import { type WeatherRaw } from "@/lib/nlp/tokenizing"
 
@@ -27,6 +28,11 @@ interface NlpResponse {
   success: boolean
   location: string
   pipeline: PipelineResult["pipeline"]
+  testAccuracy?: {
+    passed: number
+    total: number
+    score: number
+  }
   error?: string
 }
 
@@ -190,10 +196,13 @@ export async function POST(req: NextRequest): Promise<NextResponse<NlpResponse>>
     // ── Pipeline NLP (8 stage) ────────────────────────────────────────────
     const result = processWeatherNlp(raw, body.dateISO)
 
+    const testAccuracy = calcFixtureAccuracy()
+
     return NextResponse.json({
       success: true,
       location: result.pipeline.step1_raw.place?.name ?? "tidak diketahui",
       pipeline: result.pipeline,
+      testAccuracy: { passed: testAccuracy.passed, total: testAccuracy.total, score: testAccuracy.score },
     })
 
   } catch (err) {

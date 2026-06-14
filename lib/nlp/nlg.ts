@@ -66,6 +66,8 @@ const WX_LABEL_ID: Record<string, string> = {
 function wxLabelId(slug: string): string {
   const clean = slug.startsWith("kondisi_") ? slug.slice(8) : slug;
   if (WX_LABEL_ID[clean]) return WX_LABEL_ID[clean];
+  const normalized = clean.toLowerCase().replace(/\s+/g, "_");
+  if (WX_LABEL_ID[normalized]) return WX_LABEL_ID[normalized];
   return clean.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
@@ -305,6 +307,55 @@ const TEMP_SANGAT_DINGIN: Array<(a: TemplateArgs) => string> = [
     `Dingin ${a.tempC?.toFixed(0)}°C membuat tangan dan kaki cepat mati rasa. Sarung tangan bukan lagi aksesori, tapi perlindungan.`,
 ];
 
+const TEMP_DINGIN: Array<(a: TemplateArgs) => string> = [
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C terasa cukup dingin. Jaket atau sweater tipis bakal membantu.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C — udaranya dingin tapi masih nyaman dengan jaket. Cocok buat aktivitas pagi.`,
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C bikin udara pagi terasa segar. Nikmati dengan secangkir kopi hangat.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C — dingin yang menyejukkan, bukan yang membekukan. Pas buat olahraga ringan.`,
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C, udara segar dan dingin. Saat yang tepat untuk jalan pagi.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C — cukup dingin untuk membuatmu ingin memakai selimut, tapi tidak sampai menggigil.`,
+];
+
+const TEMP_HANGAT: Array<(a: TemplateArgs) => string> = [
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C terasa nyaman dan bersahabat. Cocok untuk aktivitas ringan di luar.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C — hangatnya pas, nggak bikin gerah. Hari yang menyenangkan untuk beraktivitas.`,
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C bikin udara terasa bersahabat. Tidak perlu jaket, cukup nyaman.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C, hangat yang menenangkan. Buka jendela dan biarkan udara segar masuk.`,
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C — masih nyaman untuk jalan-jalan, asal jangan lupa minum.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C — suhu hangat yang ideal. Nggak perlu khawatir kedinginan atau kepanasan.`,
+];
+
+const TEMP_SEJUK: Array<(a: TemplateArgs) => string> = [
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C terasa pas — nggak terlalu panas, nggak terlalu dingin. Enak buat jalan santai.`,
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C bikin udara terasa ringan. Jaket tipis mungkin cukup kalau keluar malam.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C, suhu yang pas buat ngopi sambil duduk-duduk di teras.`,
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C — sejuk dan nyaman. Kalau ada kesempatan, nikmati udara segar hari ini.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C — tipe suhu yang bikin kamu males berdiam diri di rumah. Ajak temen jalan-jalan!`,
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C mengingatkan pada pagi hari di pegunungan. Segar dan menenangkan.`,
+  (a) =>
+    `${a.tempC?.toFixed(0)}°C — udara sejuk, langit bersahabat, dan hatipun ikut tenang. Hari yang menyenangkan.`,
+  (a) =>
+    `Suhu ${a.tempC?.toFixed(0)}°C — bukan hanya nyaman, tapi juga bikin produktivitas meningkat. Manfaatkan!`,
+];
+
 const HUMIDITY_SANGAT_LEMBAP: Array<(a: TemplateArgs) => string> = [
   (a) => `Kelembapan ${a.humidity}% membuat udara terasa berat dan gerah.`,
   (a) =>
@@ -366,6 +417,36 @@ const WIND_KENCANG: Array<(a: TemplateArgs) => string> = [
     `Angin ${a.windSpeed?.toFixed(0)} m/s bikin jalan kaki terasa lebih berat. Tapi masih aman selama nggak ada pohon rapuh di sekitar.`,
   (a) =>
     `Angin hari ini cukup terasa, ${a.windSpeed?.toFixed(0)} m/s. Perhatikan barang ringan di sekitar rumah.`,
+];
+
+const WIND_SEDANG: Array<(a: TemplateArgs) => string> = [
+  (a) =>
+    `Angin ${a.windSpeed?.toFixed(0)} m/s cukup terasa. Barang ringan seperti kertas atau plastik perlu diamankan.`,
+  (a) =>
+    `${a.windSpeed?.toFixed(0)} m/s — angin lumayan, tapi masih nyaman untuk keluar. Jaga topi tetap di kepala.`,
+  (a) =>
+    `Angin berhembus dengan kecepatan ${a.windSpeed?.toFixed(0)} m/s. Masih aman untuk aktivitas biasa.`,
+  (a) =>
+    `Angin ${a.windSpeed?.toFixed(0)} m/s bikin suara dedaunan berdesir. Tenang dan menenangkan.`,
+  (a) =>
+    `${a.windSpeed?.toFixed(0)} m/s — angin cukup terasa kalau berkendara motor, tapi masih dalam batas wajar.`,
+  (a) =>
+    `Angin ${a.windSpeed?.toFixed(0)} m/s menambah kesejukan udara. Cocok untuk jalan sore.`,
+];
+
+const WIND_RINGAN: Array<(a: TemplateArgs) => string> = [
+  (a) =>
+    `Angin sepoi-sepoi ${a.windSpeed?.toFixed(0)} m/s menemani langkahmu. Udara terasa segar.`,
+  (a) =>
+    `${a.windSpeed?.toFixed(0)} m/s — angin ringan yang bikin suasana tambah nyaman.`,
+  (a) =>
+    `Angin ${a.windSpeed?.toFixed(0)} m/s bertiup lembut. Hari yang sempurna untuk piknik.`,
+  (a) =>
+    `Angin ringan ${a.windSpeed?.toFixed(0)} m/s membuat udara terasa hidup. Sangat bersahabat.`,
+  (a) =>
+    `Angin ${a.windSpeed?.toFixed(0)} m/s — tidak terlalu kencang, tidak terlalu lemah. Pas-pas.`,
+  (a) =>
+    `Hembusan angin ${a.windSpeed?.toFixed(0)} m/s bikin rambut terasa tertiup lembut. Hari yang indah.`,
 ];
 
 const RAIN_TINGGI: Array<(a: TemplateArgs) => string> = [
@@ -462,6 +543,38 @@ const VIS_BURUK: Array<(a: TemplateArgs) => string> = [
     `Visibilitas ${a.visKm} km, disarankan menggunakan jalur alternatif yang lebih terang dan bebas kabut.`,
 ];
 
+const HUMIDITY_NORMAL: Array<(a: TemplateArgs) => string> = [
+  (a) =>
+    `Kelembapan ${a.humidity}% terasa pas — tidak kering, tidak lengket. Nyaman untuk bernapas.`,
+  (a) =>
+    `${a.humidity}% — kelembapan ideal. Udara terasa segar dan seimbang.`,
+  (a) =>
+    `Udara dengan kelembapan ${a.humidity}%. Kondisi yang nyaman untuk kulit dan pernapasan.`,
+  (a) =>
+    `Kelembapan ${a.humidity}% menambah kenyamanan hari ini. Tidak ada keluhan dari cuaca.`,
+  (a) =>
+    `${a.humidity}% kelembapan — seperti yang diharapkan dari hari yang sempurna.`,
+];
+
+const SKY_CERAH: Array<(a: TemplateArgs) => string> = [
+  (a) =>
+    `Langit cerah bersinar tanpa halangan. Matahari menemani setiap langkahmu hari ini.`,
+  (a) =>
+    `Cerah dan bersahabat — sinar matahari memberikan energi positif untuk memulai hari.`,
+  (a) =>
+    `Langit biru bersih tanpa awan gelap. Hari ini adalah undangan untuk keluar rumah.`,
+  (a) =>
+    `Sinar matahari cukup terang, tapi masih nyaman. Jangan lupa SPF tipis untuk perlindungan.`,
+  (a) =>
+    `Cuaca cerah total — langit biru dari pagi sampai sore. Hari yang sempurna untuk menjemur atau bersepeda.`,
+  (a) =>
+    `Langit bersih dari ufuk ke ufuk. Matahari bersinar dengan ramah. Saatnya beraktivitas!`,
+  (a) =>
+    `Tidak ada setitik awan pun di langit. Pemandangan yang menyegarkan mata dan jiwa.`,
+  (a) =>
+    `Cerah penuh hari ini. Cocok untuk piknik, jalan-jalan, atau sekadar duduk santai di taman.`,
+];
+
 // ─── Sentence generator ──────────────────────────────────────────────────────
 
 function generateNlgSentences(
@@ -552,7 +665,7 @@ function generateNlgSentences(
     });
   }
 
-  // ── Suhu ekstrem ─────────────────────────────────────────────────────────
+  // ── Suhu ─────────────────────────────────────────────────────────────────
   if (hasConcept("sangat_panas")) {
     sentences.push({
       type: "condition",
@@ -571,9 +684,27 @@ function generateNlgSentences(
       text: pick(TEMP_PANAS, seed, 1)(args),
       weight: 0.8,
     });
+  } else if (hasConcept("dingin")) {
+    sentences.push({
+      type: "condition",
+      text: pick(TEMP_DINGIN, seed, 1)(args),
+      weight: 0.75,
+    });
+  } else if (hasConcept("hangat")) {
+    sentences.push({
+      type: "condition",
+      text: pick(TEMP_HANGAT, seed, 1)(args),
+      weight: 0.7,
+    });
+  } else if (hasConcept("sejuk")) {
+    sentences.push({
+      type: "condition",
+      text: pick(TEMP_SEJUK, seed, 1)(args),
+      weight: 0.7,
+    });
   }
 
-  // ── Kelembapan ekstrem ──────────────────────────────────────────────────
+  // ── Kelembapan ──────────────────────────────────────────────────────────
   if (hasConcept("sangat_lembap")) {
     sentences.push({
       type: "condition",
@@ -588,7 +719,7 @@ function generateNlgSentences(
     });
   }
 
-  // ── Angin berbahaya ─────────────────────────────────────────────────────
+  // ── Angin ────────────────────────────────────────────────────────────────
   if (hasConcept("badai")) {
     sentences.push({
       type: "wind",
@@ -600,6 +731,18 @@ function generateNlgSentences(
       type: "wind",
       text: pick(WIND_KENCANG, seed, 3)(args),
       weight: 0.85,
+    });
+  } else if (hasConcept("angin_sedang")) {
+    sentences.push({
+      type: "wind",
+      text: pick(WIND_SEDANG, seed, 3)(args),
+      weight: 0.7,
+    });
+  } else if (hasConcept("angin_ringan") || hasConcept("sepoi_sepoi") || hasConcept("tenang")) {
+    sentences.push({
+      type: "wind",
+      text: pick(WIND_RINGAN, seed, 3)(args),
+      weight: 0.5,
     });
   }
 
@@ -660,6 +803,24 @@ function generateNlgSentences(
     });
   }
 
+  // ── Sky cerah (hanya kalau sentimen baik) ────────────────────────────────
+  if (sentiment === "baik" && (hasConcept("kondisi_sunny") || hasConcept("kondisi_clear"))) {
+    sentences.push({
+      type: "condition",
+      text: pick(SKY_CERAH, seed, 8)(args),
+      weight: 0.55,
+    });
+  }
+
+  // ── Kelembapan normal (hanya kalau sentimen baik/cukup) ─────────────────
+  if ((sentiment === "baik" || sentiment === "cukup") && hasConcept("normal")) {
+    sentences.push({
+      type: "condition",
+      text: pick(HUMIDITY_NORMAL, seed, 9)(args),
+      weight: 0.45,
+    });
+  }
+
   // ── Sort: opening tetap pertama, sisanya by weight DESC ──────────────────
   const opening = sentences.filter((s) => s.type === "opening");
   const middle = sentences
@@ -671,7 +832,7 @@ function generateNlgSentences(
 
 // ─── Narrative builder — max 3 kalimat ─────────────────────────────────────
 
-const MAX_BODY_SENTENCES = 2;
+const MAX_BODY_SENTENCES = 3;
 
 function buildNarrative(sentences: NlgSentence[]): string {
   const opening = sentences.find((s) => s.type === "opening");
@@ -705,9 +866,10 @@ function buildKeyPhrase(
   // Fallback: pakai TF-IDF
   const top3 = topTerms.slice(0, 3);
   const labels = top3
-    .map(
-      (t) => concepts.find((c) => c.concept === t.term)?.humanLabel ?? t.term,
-    )
+    .map((t) => {
+      const match = concepts.find((c) => c.concept === t.term || c.concept === `kondisi_${t.term}`);
+      return match?.humanLabel ?? t.term;
+    })
     .filter(Boolean);
 
   if (labels.length === 0) return "Kondisi cuaca normal";

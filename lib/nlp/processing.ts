@@ -15,3 +15,13 @@ export { analyzeSentiment, type SentimentResult } from "./sentiment"
 export { buildHighlights, type HighlightsResult } from "./highlights"
 export { ensurePlaceName, normalizePlaceName } from "./normalize"
 export { processWeatherNlp, type PipelineResult, type PipelineStepLog } from "./pipeline"
+export {
+  validateTokenizing, validateStemming, validateFeatures,
+  validateReasoning, validateNlg, validateSentiment, validateHighlights,
+  type StageValidation, type ValCheck,
+} from "./validation"
+export {
+  accuracyTokenizing, accuracyStemming, accuracyFeatures,
+  accuracyReasoning, accuracyNlg, accuracySentiment, accuracyHighlights,
+  type StageAccuracy, type AccCheck,
+} from "./accuracy"

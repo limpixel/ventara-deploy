@@ -70,6 +70,25 @@ const TONE_ARRAYS: Record<StemmedWeather["overallSentiment"], string[]> = {
   ],
 }
 
+export function largestRemainderPct(counts: Record<string, number>, total: number): Record<string, number> {
+  const keys = Object.keys(counts)
+  const rawPct = keys.map((k) => ({ key: k, value: (counts[k] / total) * 100 }))
+  let floorSum = 0
+  const floored = rawPct.map((r) => {
+    const f = Math.floor(r.value)
+    floorSum += f
+    return { key: r.key, floor: f, remainder: r.value - f }
+  })
+  let remainder = 100 - floorSum
+  floored.sort((a, b) => b.remainder - a.remainder)
+  const result: Record<string, number> = {}
+  for (const f of floored) {
+    result[f.key] = f.floor + (remainder > 0 ? 1 : 0)
+    if (remainder > 0) remainder--
+  }
+  return result
+}
+
 export function analyzeSentiment(stemmed: StemmedWeather): SentimentResult {
   const total = stemmed.concepts.length || 1
   const counts = {
@@ -79,6 +98,8 @@ export function analyzeSentiment(stemmed: StemmedWeather): SentimentResult {
     berbahaya: stemmed.concepts.filter(c => c.sentiment === "berbahaya").length,
   }
 
+  const pct = largestRemainderPct(counts, total)
+
   const seed = seedFromString(stemmed.location + stemmed.overallSentiment + stemmed.overallScore)
   const toneArray = TONE_ARRAYS[stemmed.overallSentiment]
 
@@ -87,10 +108,10 @@ export function analyzeSentiment(stemmed: StemmedWeather): SentimentResult {
     score: stemmed.overallScore,
     tone: pick(toneArray, seed, 0) + ".",
     breakdown: {
-      positif: Math.round((counts.positif / total) * 100),
-      netral: Math.round((counts.netral / total) * 100),
-      waspada: Math.round((counts.waspada / total) * 100),
-      berbahaya: Math.round((counts.berbahaya / total) * 100),
+      positif: pct.positif,
+      netral: pct.netral,
+      waspada: pct.waspada,
+      berbahaya: pct.berbahaya,
     },
   }
 }
