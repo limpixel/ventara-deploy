@@ -16,7 +16,7 @@ const CLIENT_SECRET = process.env.XWEATHER_CLIENT_SECRET ?? process.env.NEXT_PUB
 
 // ─── Tipe request body ───────────────────────────────────────────────────────
 
-interface NlpRequestBody {
+interface NlpRequestBody {  
   location: string
   action?: string
   dateISO?: string
