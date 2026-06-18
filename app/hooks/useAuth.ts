@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { PYTHON_API_URL } from '@/app/lib/api';
 
 export type AuthView = 'landing' | 'register' | 'login';
@@ -45,7 +46,36 @@ export function useAuth() {
     sessionStorage.setItem("ventara_name", data.name);
     sessionStorage.setItem("ventara_username", data.username);
     sessionStorage.setItem("ventara_email", data.email || "");
-    document.cookie = `ventara_username=${data.username}; path=/; SameSite=Lax`; // ← tambah ini
+    document.cookie = `ventara_username=${data.username}; path=/; SameSite=Lax`;
+
+    const syncRes = await fetch("/api/auth/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: data.username,
+        email: data.email || `${data.username}@ventara.app`,
+        name: data.name,
+        role: data.role || "user",
+        password,
+      }),
+    });
+
+    if (syncRes.ok) {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email || `${data.username}@ventara.app`,
+        password,
+      });
+      if (signInError) {
+        console.warn("Supabase sign-in failed:", signInError.message);
+      }
+    } else {
+      const syncErr = await syncRes.json().catch(() => ({}));
+      console.warn("Supabase sync failed:", syncErr.error || syncRes.statusText);
+    }
 
     router.push(
       data.role === "admin"

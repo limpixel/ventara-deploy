@@ -60,82 +60,86 @@ export default function HistorisPage() {
     percent: 0,
   });
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [selectedTier, setSelectedTier] =
-  useState<"basic" | "business">("basic");
+  const [selectedTier, setSelectedTier] = useState<"basic" | "business">(
+    "basic",
+  );
   const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
-  const [paymentTier, setPaymentTier] = useState<"basic" | "business" | null>(null);
+  const [paymentTier, setPaymentTier] = useState<"basic" | "business" | null>(
+    null,
+  );
 
-  const TIER_ORDER = { basic: 1, business: 2 }
+  const TIER_ORDER = { basic: 1, business: 2 };
 
   function isTierOwned(tier: string) {
-    return TIER_ORDER[tier as keyof typeof TIER_ORDER] <= TIER_ORDER[storageInfo.tier as keyof typeof TIER_ORDER]
+    return (
+      TIER_ORDER[tier as keyof typeof TIER_ORDER] <=
+      TIER_ORDER[storageInfo.tier as keyof typeof TIER_ORDER]
+    );
   }
 
   function getTierExpiry(tier: string): Date | null {
-    const record = [...paymentHistory].reverse().find(p => p.tier === tier)
-    if (!record) return null
-    const expiry = new Date(record.paid_at)
-    expiry.setDate(expiry.getDate() + 30)
-    return expiry
+    const record = [...paymentHistory].reverse().find((p) => p.tier === tier);
+    if (!record) return null;
+    const expiry = new Date(record.paid_at);
+    expiry.setDate(expiry.getDate() + 30);
+    return expiry;
   }
 
-useEffect(() => {
-  async function fetchHistory() {
-    try {
-      const username = sessionStorage.getItem("ventara_username") || "";
-      const res = await fetch(`/api/get-history?username=${username}`);
-      const json = await res.json();
-      setData(Array.isArray(json) ? json : []);
-    } catch (error) {
-      console.error("Failed to fetch history:", error);
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const username = sessionStorage.getItem("ventara_username") || "";
+        const res = await fetch(`/api/get-history?username=${username}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : []);
+      } catch (error) {
+        console.error("Failed to fetch history:", error);
+      }
     }
-  }
 
-  async function fetchStorage() {
-    try {
+    async function fetchStorage() {
+      try {
+        const username = sessionStorage.getItem("ventara_username") || "";
+        if (!username) return;
+
+        const res = await fetch(`/api/storage-info?username=${username}`);
+
+        if (!res.ok) {
+          console.error("Storage API returned", res.status);
+          return;
+        }
+
+        const text = await res.text();
+        if (!text) {
+          console.error("Empty response from storage API");
+          return;
+        }
+
+        const json = JSON.parse(text);
+        console.log("HISTORY JSON =", json);
+
+        if (json.success) {
+          setStorageInfo(json);
+        }
+      } catch (error) {
+        console.error("Failed to fetch storage:", error);
+      }
+    }
+
+    async function fetchPaymentHistory() {
       const username = sessionStorage.getItem("ventara_username") || "";
       if (!username) return;
-
-      const res = await fetch(
-        `/api/storage-info?username=${username}`
-      );
-
-      if (!res.ok) {
-        console.error("Storage API returned", res.status);
-        return;
-      }
-
-      const text = await res.text();
-      if (!text) {
-        console.error("Empty response from storage API");
-        return;
-      }
-
-      const json = JSON.parse(text);
-      console.log("HISTORY JSON =", json);
-
-      if (json.success) {
-        setStorageInfo(json);
-      }
-    } catch (error) {
-      console.error("Failed to fetch storage:", error);
+      try {
+        const res = await fetch(`/api/payment/history?username=${username}`);
+        const json = await res.json();
+        if (json.success) setPaymentHistory(json.data);
+      } catch {}
     }
-  }
 
-  async function fetchPaymentHistory() {
-    const username = sessionStorage.getItem("ventara_username") || ""
-    if (!username) return
-    try {
-      const res = await fetch(`/api/payment/history?username=${username}`)
-      const json = await res.json()
-      if (json.success) setPaymentHistory(json.data)
-    } catch {}
-  }
-
-  fetchHistory();
-  fetchStorage();
-  fetchPaymentHistory();
-}, []);;
+    fetchHistory();
+    fetchStorage();
+    fetchPaymentHistory();
+  }, []);
 
   // ganti DUMMY_DATA jadi data
 
@@ -212,35 +216,42 @@ useEffect(() => {
               </div>
             </div>
 
-          {/* Storage Bar */}
-          <div className="bg-white border border-gray-200 rounded-xl px-5 py-3.5 mb-5 flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs text-gray-500">
-                  Penggunaan Penyimpanan —{" "}
-                  <span className="font-semibold text-gray-700 capitalize">{storageInfo.tier}</span>
-                </span>
-                <span className="text-xs text-gray-500">
-                  {storageInfo.usage_mb.toFixed(2)} / {storageInfo.limit_mb.toFixed(2)} MB ({storageInfo.percent.toFixed(1)}%)
-                </span>
+            {/* Storage Bar */}
+            <div className="bg-white border border-gray-200 rounded-xl px-5 py-3.5 mb-5 flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-xs text-gray-500">
+                    Penggunaan Penyimpanan —{" "}
+                    <span className="font-semibold text-gray-700 capitalize">
+                      {storageInfo.tier}
+                    </span>
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {storageInfo.usage_mb.toFixed(2)} /{" "}
+                    {storageInfo.limit_mb.toFixed(2)} MB (
+                    {storageInfo.percent.toFixed(1)}%)
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      storageInfo.percent >= 90
+                        ? "bg-red-500"
+                        : storageInfo.percent >= 70
+                          ? "bg-amber-400"
+                          : "bg-teal-500"
+                    }`}
+                    style={{ width: `${Math.min(storageInfo.percent, 100)}%` }}
+                  />
+                </div>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full transition-all ${
-                    storageInfo.percent >= 90 ? "bg-red-500" :
-                    storageInfo.percent >= 70 ? "bg-amber-400" : "bg-teal-500"
-                  }`}
-                  style={{ width: `${Math.min(storageInfo.percent, 100)}%` }}
-                />
-              </div>
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className="text-sm text-teal-600 font-medium hover:text-teal-700 whitespace-nowrap border border-teal-200 px-4 py-2 rounded-xl hover:bg-teal-50 transition"
+              >
+                Upgrade (Gratis)
+              </button>
             </div>
-            <button
-              onClick={() => setShowUpgradeModal(true)}
-              className="text-sm text-teal-600 font-medium hover:text-teal-700 whitespace-nowrap border border-teal-200 px-4 py-2 rounded-xl hover:bg-teal-50 transition"
-            >
-              Upgrade (Gratis)
-            </button>
-          </div>
 
             {/* Table */}
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -521,79 +532,113 @@ useEffect(() => {
                 </span>
               </p>
 
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              {[
-                { key: "basic", label: "Basic", mb: "100.00 MB", price: "Rp 2.000 / bulan" },
-                { key: "business", label: "Business", mb: "2048.00 MB", price: "Rp 299.000 / bulan" },
-              ].map((tier) => {
-                const owned = isTierOwned(tier.key)
-                const expiry = getTierExpiry(tier.key)
-                const isCurrent = tier.key === storageInfo.tier
-                return (
-                <div
-                  key={tier.key}
-                  onClick={() => !owned && setSelectedTier(tier.key as "basic" | "business")}
-                  className={`border-2 rounded-xl p-4 transition ${
-                    owned
-                      ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
-                      : selectedTier === tier.key
-                        ? "border-teal-400 bg-teal-50 cursor-pointer"
-                        : "border-gray-200 hover:border-gray-300 cursor-pointer"
-                  }`}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-semibold text-gray-800">{tier.label}</span>
-                    {owned ? (
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                        {isCurrent ? "Paket Saat Ini" : "Sudah Dibeli"}
-                      </span>
-                    ) : (
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Bayar</span>
-                    )}
-                  </div>
-                  <p className="text-xl font-bold text-gray-900">{tier.mb}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">{tier.price}</p>
-                  {owned && expiry && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      Berlaku sampai {expiry.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                    </p>
-                  )}
-                </div>
-              )})}
-            </div>
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                {[
+                  {
+                    key: "basic",
+                    label: "Basic",
+                    mb: "100.00 MB",
+                    price: "Rp 2.000 / bulan",
+                  },
+                  {
+                    key: "business",
+                    label: "Business",
+                    mb: "2048.00 MB",
+                    price: "Rp 299.000 / bulan",
+                  },
+                ].map((tier) => {
+                  const owned = isTierOwned(tier.key);
+                  const expiry = getTierExpiry(tier.key);
+                  const isCurrent = tier.key === storageInfo.tier;
+                  return (
+                    <div
+                      key={tier.key}
+                      onClick={() =>
+                        !owned &&
+                        setSelectedTier(tier.key as "basic" | "business")
+                      }
+                      className={`border-2 rounded-xl p-4 transition ${
+                        owned
+                          ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+                          : selectedTier === tier.key
+                            ? "border-teal-400 bg-teal-50 cursor-pointer"
+                            : "border-gray-200 hover:border-gray-300 cursor-pointer"
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-semibold text-gray-800">
+                          {tier.label}
+                        </span>
+                        {owned ? (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                            {isCurrent ? "Paket Saat Ini" : "Sudah Dibeli"}
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                            Bayar
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xl font-bold text-gray-900">
+                        {tier.mb}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        {tier.price}
+                      </p>
+                      {owned && expiry && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Berlaku sampai{" "}
+                          {expiry.toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
-            <button
-              onClick={() => {
-                if (!isTierOwned(selectedTier)) setPaymentTier(selectedTier)
-              }}
-              className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition capitalize"
-            >
-              {isTierOwned(selectedTier)
-                ? `${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} ( Upgrade )`
-                : `Upgrade ke ${selectedTier} — ${
-                    { basic: "Rp 2.000", business: "Rp 299.000" }[selectedTier]
-                  }/bulan`
-              }
-            </button>
+              <button
+                onClick={() => {
+                  if (!isTierOwned(selectedTier)) setPaymentTier(selectedTier);
+                }}
+                className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition capitalize"
+              >
+                {isTierOwned(selectedTier)
+                  ? `${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} ( Upgrade )`
+                  : `Upgrade ke ${selectedTier} — ${
+                      { basic: "Rp 2.000", business: "Rp 299.000" }[
+                        selectedTier
+                      ]
+                    }/bulan`}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-      {paymentTier && (
-        <PaymentModal
-          tier={paymentTier}
-          onClose={() => { setPaymentTier(null); setShowUpgradeModal(false); }}
-          onSuccess={() => {
-            const username = sessionStorage.getItem("ventara_username") || "";
-            fetch(`${PYTHON_API_URL}/storage_info`, {
-              headers: { "X-Username": username }, credentials: "include",
-            }).then(r => r.json()).then(json => {
-              if (json.success) setStorageInfo(json);
-            });
-            setPaymentTier(null);
-            setShowUpgradeModal(false);
-          }}
-        />
-      )}
+        )}
+        {paymentTier && (
+          <PaymentModal
+            tier={paymentTier}
+            onClose={() => {
+              setPaymentTier(null);
+              setShowUpgradeModal(false);
+            }}
+            onSuccess={() => {
+              const username = sessionStorage.getItem("ventara_username") || "";
+              fetch(`${PYTHON_API_URL}/storage_info`, {
+                headers: { "X-Username": username },
+                credentials: "include",
+              })
+                .then((r) => r.json())
+                .then((json) => {
+                  if (json.success) setStorageInfo(json);
+                });
+              setPaymentTier(null);
+              setShowUpgradeModal(false);
+            }}
+          />
+        )}
       </main>
     </div>
   );

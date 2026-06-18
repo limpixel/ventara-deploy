@@ -75,7 +75,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         stopTraining();
         return;
       }
-        const data = await fetchTrainProgress();
+        const data = await fetchTrainProgress(username);
 
         const next: TrainingState = {
           isTraining: true,
@@ -136,7 +136,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const init = async () => {
       try {
-        const data = await fetchTrainProgress();
+        const username = sessionStorage.getItem("ventara_username")
+        const data = await fetchTrainProgress(username || undefined);
 
         if (data.running) {
           poll(() => {
