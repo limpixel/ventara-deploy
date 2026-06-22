@@ -9,8 +9,11 @@ import MetricsSection from "@/app/components/metrics/MetricsSection";
 import ProgressToast from "@/app/components/toast/ProgressToast";
 import { useMetrics } from "@/app/hooks/useMetrics";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { useGenerateContext } from "@/app/context/GenerateContext";
+
+import { useGuide, FORECASTING_STEPS } from "@/app/hooks/Useguide";
+
+import { GuideModal, GuideOverlay, GuideButton } from "@/app/components/guide";
 
 export default function ForecastingPage() {
   const ALL_VARS = ["WS10M", "WD10M", "T2M", "RH2M", "PS"];
@@ -36,7 +39,36 @@ export default function ForecastingPage() {
   } = useMetrics(selectedVars);
   const { generate, startGenerate } = useGenerateContext();
 
-  const pathname = usePathname();
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = sessionStorage.getItem("ventara_username");
+    setUsername(user);
+  }, []);
+
+  const guideStorageKey = username
+    ? `ventara_guide_forecasting_done_${username}`
+    : null;
+
+  const {
+    isOpen: guideOpen,
+    currentStep,
+    totalSteps,
+    step,
+    highlightRect,
+    isFirstStep,
+    isLastStep,
+    next,
+    back,
+    finish,
+    openGuide,
+    showFlyAnimation,
+    startCoords,
+    resetFlyAnimation,
+  } = useGuide({
+    steps: FORECASTING_STEPS,
+    storageKey: guideStorageKey,
+  });
 
   useEffect(() => {
     refreshMetrics();
@@ -123,7 +155,7 @@ export default function ForecastingPage() {
         <div className="p-8">
           <div className="max-w-5xl mx-auto">
             {/* HEADING */}
-            <div className="mb-6">
+            <div className="mb-6 cursor-default">
               <h2 className="text-2xl font-bold text-gray-900 mb-1">
                 Perhitungan & Prediksi
               </h2>
@@ -163,7 +195,7 @@ export default function ForecastingPage() {
             </div>
 
             {/* STATUS BOX */}
-            <div className="mb-6">
+            <div className="mb-6" data-guide="upload-csv">
               <UploadState
                 uiState={uiState}
                 datasetName={dataset_name}
@@ -192,7 +224,7 @@ export default function ForecastingPage() {
             {/* CARD */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               {/* PILIH MODEL */}
-              <div className="mb-6">
+              <div className="mb-6" data-guide="algo-selector">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="bg-teal-100 rounded-xl pt-2 pl-2.5 w-10 h-10">
                     <svg
@@ -209,7 +241,7 @@ export default function ForecastingPage() {
                       />
                     </svg>
                   </div>
-                  <h3 className="font-semibold text-gray-900">
+                  <h3 className="font-semibold text-gray-900 cursor-default">
                     Pilih Algoritma Machine Learning
                   </h3>
                 </div>
@@ -245,7 +277,7 @@ export default function ForecastingPage() {
                       <button
                         key={v}
                         onClick={() => setSelectedVars(v)}
-                        className={`px-3 py-2 rounded-xl text-xs font-medium border-2 transition-all select-none whitespace-nowrap ${
+                        className={`px-3 py-2 rounded-xl text-xs font-medium border-2 transition-all select-none whitespace-nowrap cursor-pointer ${
                           selectedVars === v
                             ? "bg-teal-50 border-teal-400 text-teal-700"
                             : "bg-gray-100 border-gray-200 text-gray-500 hover:border-teal-200"
@@ -286,18 +318,21 @@ export default function ForecastingPage() {
               </div>
 
               {/* METRICS */}
-              <MetricsSection
-                metrics={metrics}
-                selectedModel={selectedModel}
-                bestModels={best_models}
-                selectedVar={selectedVars}
-                stackingMetrics={stacking_metrics}
-                ensembleSummary={ensembleSummary}
-              />
+              <div data-guide="metrics-section">
+                <MetricsSection
+                  metrics={metrics}
+                  selectedModel={selectedModel}
+                  bestModels={best_models}
+                  selectedVar={selectedVars}
+                  stackingMetrics={stacking_metrics}
+                  ensembleSummary={ensembleSummary}
+                />
+              </div>
 
               {/* BUTTON */}
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <button
+                  data-guide="btn-generate"
                   disabled={isGenerateDisabled}
                   onClick={handleGenerateClick}
                   title={
@@ -341,6 +376,32 @@ export default function ForecastingPage() {
         status={generate.status}
         eta={generate.eta}
         elapsed={generate.elapsed}
+      />
+
+      {guideOpen && (
+        <>
+          <GuideOverlay highlightRect={highlightRect} onSkip={finish} />
+
+          <GuideModal
+            isOpen={guideOpen}
+            step={step}
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            highlightRect={highlightRect}
+            isFirstStep={isFirstStep}
+            isLastStep={isLastStep}
+            onNext={next}
+            onBack={back}
+            onFinish={finish}
+          />
+        </>
+      )}
+
+      <GuideButton
+        onClick={openGuide}
+        showFlyAnimation={showFlyAnimation}
+        startCoords={startCoords}
+        onAnimationComplete={resetFlyAnimation}
       />
     </div>
   );
