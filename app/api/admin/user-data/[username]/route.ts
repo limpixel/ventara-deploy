@@ -3,11 +3,12 @@ import { PYTHON_API } from "../../../_config";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
+  const { username } = await params;
   const cookie = req.headers.get("cookie") || "";
   const res = await fetch(
-    `${PYTHON_API}/user-data/${params.username}`,
+    `${PYTHON_API}/user-data/${username}`,
     { headers: { cookie } }
   );
   const data = await res.json();
@@ -16,12 +17,13 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
+  const { username } = await params;
   const cookie = req.headers.get("cookie") || "";
   const body = await req.json();
   const res = await fetch(
-    `${PYTHON_API}/user-data/${params.username}`,
+    `${PYTHON_API}/user-data/${username}`,
     {
       method: "PUT",
       headers: {
