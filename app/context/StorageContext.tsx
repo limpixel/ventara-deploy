@@ -13,6 +13,8 @@ interface StorageInfo {
   usage_mb: number;
   limit_mb: number;
   percent: number;
+  hash_count: number;        // ← tambah
+  snapshot_limit: number;
 }
 
 interface StorageContextType {
@@ -30,24 +32,24 @@ export function StorageProvider({
 
   const [storageInfo, setStorageInfo] =
     useState<StorageInfo>({
-      tier: "gratis",
+      tier: "free",
       usage_mb: 0,
       limit_mb: 10,
       percent: 0,
+      hash_count: 0,             // ← tambah
+  snapshot_limit: 2,
     });
 
   const refreshStorage = async () => {
     try {
       const username =
-        sessionStorage.getItem("ventara_username");
-
-      if (!username) return;
+        sessionStorage.getItem("ventara_username") || "";
+        console.log("refreshStorage username:", username); // ← tambah
+    if (!username) return; // ← tambah, biar ga fetch kalau kosong
 
       const res = await fetch(
         `/api/storage-info?username=${username}`
       );
-
-      if (!res.ok) return;
 
       const json = await res.json();
 
@@ -60,8 +62,11 @@ export function StorageProvider({
   };
 
   useEffect(() => {
+  const username = sessionStorage.getItem("ventara_username");
+  if (username) {  // ← hanya fetch kalau sudah login
     refreshStorage();
-  }, []);
+  }
+}, []);
 
   return (
     <StorageContext.Provider

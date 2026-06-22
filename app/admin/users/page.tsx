@@ -5,14 +5,13 @@ import Sidebar from '@/app/components/layout/Sidebar';
 import { UsersTab } from '@/app/components/admin/UsersTab';
 import { DeleteConfirmModal } from '@/app/components/admin/DeleteConfirmModal';
 import { useAdminData } from '@/app/hooks/useAdminData';
-import { User } from '@/app/types/admin.types';
 
 export default function UsersPage() {
-  const { users, dashboardStats, deleteUser, activateUser, getUserUsageToday } = useAdminData();
+  const { users, dashboardStats, activateUser, getUserUsageToday } = useAdminData();
   const [searchUser, setSearchUser] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [showActivateConfirm, setShowActivateConfirm] = useState<string | null>(null);
-  const userToDelete = users.find(u => u.id === (showDeleteConfirm || showActivateConfirm));
+  const [usernameToConfirm, setUsernameToConfirm] = useState<string | null>(null);
+
+  const targetUser = users.find(u => u.username === usernameToConfirm);
 
   return (
     <div className="flex h-screen">
@@ -29,27 +28,24 @@ export default function UsersPage() {
               users={users}
               searchQuery={searchUser}
               onSearchChange={setSearchUser}
-              onEditUser={(user: User) => {}}
-              onDeactivateUser={(id) => setShowDeleteConfirm(id)}
-              onActivateUser={(id) => setShowActivateConfirm(id)}
+              onDeactivateUser={(username) => setUsernameToConfirm(username)}
+              onActivateUser={activateUser}
               getUserUsageToday={getUserUsageToday}
             />
           </div>
         </div>
       </main>
       <DeleteConfirmModal
-        isOpen={!!showDeleteConfirm}
-        username={userToDelete?.username || ''}
+        isOpen={!!usernameToConfirm}
+        username={targetUser?.username || ''}
         mode="deactivate"
-        onConfirm={async () => { if (showDeleteConfirm) { await activateUser(showDeleteConfirm, false); setShowDeleteConfirm(null); } }}
-        onCancel={() => setShowDeleteConfirm(null)}
-      />
-      <DeleteConfirmModal
-        isOpen={!!showActivateConfirm}
-        username={userToDelete?.username || ''}
-        mode="activate"
-        onConfirm={async () => { if (showActivateConfirm) { await activateUser(showActivateConfirm, true); setShowActivateConfirm(null); } }}
-        onCancel={() => setShowActivateConfirm(null)}
+        onConfirm={() => {
+          if (usernameToConfirm) {
+            activateUser(usernameToConfirm, false);
+            setUsernameToConfirm(null);
+          }
+        }}
+        onCancel={() => setUsernameToConfirm(null)}
       />
     </div>
   );

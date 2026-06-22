@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { PYTHON_API_URL } from "@/app/lib/api";
+import { useTraining } from "@/app/context/TrainingContext";
 
 import { Bebas_Neue } from "next/font/google";
 
@@ -15,15 +15,16 @@ const bebasNeue = Bebas_Neue({
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-
+  const { cancelTraining, stopTraining } = useTraining();
   const [role, setRole] = useState<"user" | "admin">("user");
   const [name, setName] = useState("User");
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-  const [avatar, setAvatar] = useState("/icon/default-avatar-profile.jpg");
+  const [avatar, setAvatar] = useState("/icon/avatar-default.svg");
+  const isDefaultAvatar = avatar === "/icon/avatar-default.svg";
 
-  const isMoreActive = pathname === "/history" || pathname === "/history/payments" || pathname === "/settings";
+  const isMoreActive = pathname === "/history" || pathname === "/settings";
 
   useEffect(() => {
     const savedRole = sessionStorage.getItem("ventara_role") as
@@ -35,7 +36,7 @@ export default function Sidebar() {
     if (savedRole) setRole(savedRole);
     if (savedName) setName(savedName);
     if (savedAvatar && savedAvatar !== "null") setAvatar(savedAvatar);
-    if (pathname === "/history" || pathname === "/history/payments" || pathname === "/settings") setOpen(true);
+    if (pathname === "/history" || pathname === "/settings") setOpen(true);
   }, [pathname]);
 
   useEffect(() => {
@@ -54,15 +55,20 @@ export default function Sidebar() {
   async function handleLogout() {
     setProfileOpen(false);
 
+    // Stop toast & cancel training dulu
+    stopTraining(); // langsung hilangkan banner
     try {
-      await fetch(`${PYTHON_API_URL}/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (_) {}
+      await cancelTraining(); // cancel di Flask
+    } catch (e) {
+      console.error("Cancel training on logout failed:", e);
+    }
+
+    await fetch("http://localhost:5000/logout", {
+      method: "POST",
+      credentials: "include",
+    });
 
     sessionStorage.clear();
-
     router.push("/");
   }
 
@@ -91,7 +97,7 @@ export default function Sidebar() {
           <>
             {/* SECTION LABEL */}
             <div
-              className={` ${bebasNeue.className} text-xl tracking-[0.3rem] font-semibold text-gray-400 uppercase px-2 pb-3 pt-4 mb-4`}
+              className={` ${bebasNeue.className} text-xl tracking-[0.3rem] font-semibold text-gray-400 uppercase px-2 pb-3 pt-4 mb-4 cursor-default`}
             >
               Menu
             </div>
@@ -130,7 +136,7 @@ export default function Sidebar() {
             <div>
               <button
                 onClick={() => setOpen(!open)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg font-medium transition-colors ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer ${
                   isMoreActive
                     ? "bg-teal-100 text-teal-700"
                     : "text-gray-600 hover:bg-gray-50"
@@ -188,7 +194,10 @@ export default function Sidebar() {
                     History Data
                   </Link>
 
-                  <Link href="/history/payments" className={subLinkClass("/history/payments")}>
+                  <Link
+                    href="/history/payments"
+                    className={subLinkClass("/history/payments")}
+                  >
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -199,10 +208,10 @@ export default function Sidebar() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth="2"
-                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                        d="M3 10h18M7 15h1m3 0h2m-8 5h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                       />
                     </svg>
-                    Pembayaran
+                    History Payments
                   </Link>
 
                   <Link href="/settings" className={subLinkClass("/settings")}>
@@ -216,12 +225,17 @@ export default function Sidebar() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth="2"
-                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                       />
                     </svg>
                     Settings
                   </Link>
-
                 </div>
               </div>
             </div>
@@ -258,12 +272,25 @@ export default function Sidebar() {
             </Link>
 
             {/* Manage Resource */}
-            {/* <Link href="/admin/resources" className={linkClass("/admin/resources")}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            <Link
+              href="/admin/resources"
+              className={linkClass("/admin/resources")}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                />
               </svg>
               Manage Resource
-            </Link> */}
+            </Link>
 
             {/* User Manager */}
             <Link href="/admin/users" className={linkClass("/admin/users")}>
@@ -297,14 +324,14 @@ export default function Sidebar() {
           ${profileOpen ? "opacity-100 scale-y-100 translate-y-0" : "opacity-0 scale-y-95 translate-y-1 pointer-events-none"}
         `}
         >
-          <div className="px-4 py-3 border-b border-gray-100">
+          <div className="px-4 py-3 border-b border-gray-100 cursor-default">
             <p className="text-xs text-gray-400">Masuk sebagai</p>
             <p className="text-sm font-semibold text-gray-700 mt-0.5">{name}</p>
             <p className="text-xs text-teal-600 mt-0.5 capitalize">{role}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
           >
             <svg
               className="w-4 h-4"
@@ -326,10 +353,24 @@ export default function Sidebar() {
         {/* Trigger */}
         <button
           onClick={() => setProfileOpen(!profileOpen)}
-          className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
         >
-          <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden shrink-0">
-            <img src={avatar} className="w-full h-full object-cover object-top border-2 border-teal-500 rounded-full" alt="" />
+          <div className="w-9 h-9 rounded-full overflow-hidden shrink-0">
+            {isDefaultAvatar ? (
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-full h-full bg-gray-200 text-gray-500 border-4 rounded-full"
+              >
+                <path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5Zm0 2c-4.418 0-8 3.582-8 8h16c0-4.418-3.582-8-8-8Z" />
+              </svg>
+            ) : (
+              <img
+                src={avatar}
+                className="w-full h-full object-cover rounded-full"
+                alt=""
+              />
+            )}
           </div>
           <div className="flex-1 text-left min-w-0">
             <p className="text-xs text-gray-400 capitalize">

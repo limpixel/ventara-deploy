@@ -34,6 +34,7 @@ import {
 
 import Sidebar from "@/app/components/layout/Sidebar";
 import Header from "@/app/components/layout/Header";
+import type { StemmedWeather } from "@/lib/nlp/stemming";
 
 // Leaflet SSR-safe
 const MapComponent = dynamic(
@@ -113,17 +114,70 @@ interface NlpOutput {
   highlights: NlpHighlights;
 }
 
+type ValCheckRes = { name: string; status: "passed" | "warning" | "failed"; message: string };
+type StageValidationRes = { stage: string; status: "passed" | "warning" | "failed"; checks: ValCheckRes[] };
+type AccCheckRes = { name: string; status: "passed" | "warning" | "failed"; score: number; message: string; detail?: string };
+type StageAccuracyRes = { stage: string; score: number; checks: AccCheckRes[] };
+
 interface NlpPipelineResponse {
   success: boolean;
   location: string;
   pipeline: {
     step2_tokens: string[];
     step3_stemmed: {
-      concepts: NlpConcept[];
-      overallSentiment: NlpSentiment["label"];
+      concepts: StemmedWeather["concepts"];
+      overallSentiment: StemmedWeather["overallSentiment"];
       overallScore: number;
     };
     step4_nlp: NlpOutput;
+    step5_xai: {
+      tokenizing: {
+        classifications: Array<{ parameter: string; rawValue: string | number; unit: string; label: string; category: string }>;
+      };
+      stemming: {
+        concepts: Array<{ concept: string; humanLabel: string; sentiment: string; baseWeight: number; finalWeight: number; boostAmount: number; boostSources: string[] }>;
+      };
+      features: {
+        ngramBoosts: Array<{ ngram: string; baseScore: number; boost: number; finalScore: number; boostReason: string }>;
+        tfidfHighlights: Array<{ term: string; tfidf: number; significance: string }>;
+      };
+      reasoning: {
+        activeRules: Array<{ ruleId: string; label: string; matchedConditions: string[]; severity: number; impactDescription: string; advice: string }>;
+        totalRules: number;
+      };
+      sentiment: {
+        breakdownDetail: Array<{ category: string; count: number; percentage: number; concepts: string[] }>;
+        scoreExplanation: string;
+        labelExplanation: string;
+      };
+      highlights: {
+        warnings: Array<{ text: string; reason: string; sourceConcept: string }>;
+        positives: Array<{ text: string; reason: string; sourceConcept: string }>;
+      };
+    };
+    validation: {
+      tokenizing: StageValidationRes;
+      stemming: StageValidationRes;
+      features: StageValidationRes;
+      reasoning: StageValidationRes;
+      nlg: StageValidationRes;
+      sentiment: StageValidationRes;
+      highlights: StageValidationRes;
+    };
+    accuracy: {
+      tokenizing: StageAccuracyRes;
+      stemming: StageAccuracyRes;
+      features: StageAccuracyRes;
+      reasoning: StageAccuracyRes;
+      nlg: StageAccuracyRes;
+      sentiment: StageAccuracyRes;
+      highlights: StageAccuracyRes;
+    };
+  };
+  testAccuracy?: {
+    passed: number;
+    total: number;
+    score: number;
   };
   error?: string;
 }
@@ -1378,6 +1432,434 @@ function DetailModal({
                         </div>
                       </div>
                     </details>
+
+                    {/* ─── Validasi & Akurasi Pipeline ──────────────────── */}
+                    {nlpResult?.pipeline.validation && nlpResult?.pipeline.accuracy && (() => {
+                      const validation = nlpResult.pipeline.validation;
+                      const accuracy = nlpResult.pipeline.accuracy;
+                      const stages: Array<{ key: "tokenizing" | "stemming" | "features" | "reasoning" | "nlg" | "sentiment" | "highlights"; label: string }> = [
+                        { key: "tokenizing", label: "Tokenizing" },
+                        { key: "stemming", label: "Stemming" },
+                        { key: "features", label: "Features" },
+                        { key: "reasoning", label: "Reasoning" },
+                        { key: "nlg", label: "NLG" },
+                        { key: "sentiment", label: "Sentiment" },
+                        { key: "highlights", label: "Highlights" },
+                      ];
+                      const avgScore = Math.round(
+                        stages.reduce((sum, s) => sum + accuracy[s.key].score, 0) / stages.length,
+                      );
+                      const testAcc = nlpResult?.testAccuracy;
+                      const fixtureScore = testAcc ? testAcc.score : avgScore;
+                      const statusIcon = (st: string) => {
+                        if (st === "passed") return <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />;
+                        if (st === "warning") return <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />;
+                        return <AlertCircle className="h-3.5 w-3.5 text-red-500" />;
+                      };
+                      return (
+                        <details open className="border border-slate-200 rounded-xl overflow-hidden mt-4 group">
+                          <summary className="px-4 py-2.5 bg-slate-50 cursor-pointer text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2 list-none [&::-webkit-details-marker]:hidden">
+                            <BarChart3 className="h-4 w-4 text-[#00a991] shrink-0" />
+                            <span>Pipeline Validasi &amp; Akurasi Algoritma</span>
+                            <span className="text-xs font-mono text-slate-400 ml-2 hidden sm:inline">({avgScore}% / {testAcc?.score ?? "—"}%)</span>
+                            <ChevronRight className="h-4 w-4 ml-auto text-slate-400 transition-transform group-open:rotate-90" />
+                          </summary>
+                          <div className="p-4 space-y-4 text-sm">
+                            {/* ─── Bar Overfitting / Underfitting ────────────── */}
+                            <div>
+                              <h4 className="font-semibold text-slate-700 mb-2">Indikasi Overfitting</h4>
+                              <div className="relative h-5 bg-gradient-to-r from-red-400 via-emerald-400 to-amber-400 rounded-full overflow-hidden">
+                                <div
+                                  className="absolute top-0 h-full w-0.5 bg-slate-900 rounded-full transition-all duration-300"
+                                  style={{ left: `clamp(0%, ${fixtureScore}%, 100%)` }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-between px-2 text-[10px] font-bold text-white/90 drop-shadow">
+                                  <span>Underfit</span>
+                                  <span>Ideal</span>
+                                  <span>Overfit</span>
+                                </div>
+                              </div>
+                              <p className="text-xs mt-1.5 text-slate-600">
+                                {testAcc
+                                  ? `Berdasarkan ${testAcc.total} check terhadap ground truth: ${testAcc.passed}/${testAcc.total} (${testAcc.score}%)`
+                                  : "Memuat data akurasi..."}
+                              </p>
+                              {testAcc && (
+                                <p className="text-xs mt-0.5 text-slate-500">
+                                  {testAcc.score >= 95
+                                    ? "⚠ Potensi overfitting — akurasi terlalu tinggi, fixture perlu diverifikasi ulang"
+                                    : testAcc.score >= 70
+                                      ? "✓ Akurasi dalam rentang ideal — algoritma tidak overfit maupun underfit"
+                                      : "✗ Underfitting — akurasi rendah, algoritma perlu diperbaiki"}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-slate-700 mb-2">Ringkasan per Stage</h4>
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="border-b border-slate-200">
+                                      <th className="text-left py-1.5 px-2 font-medium text-slate-500">Stage</th>
+                                      <th className="text-left py-1.5 px-2 font-medium text-slate-500">Validasi</th>
+                                      <th className="text-right py-1.5 px-2 font-medium text-slate-500">Akurasi</th>
+                                      <th className="text-right py-1.5 px-2 font-medium text-slate-500">Checks</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {stages.map((s) => {
+                                      const val = validation[s.key];
+                                      const acc = accuracy[s.key];
+                                      const passedChecks = val.checks.filter((c) => c.status === "passed").length;
+                                      return (
+                                        <tr key={s.key} className="border-b border-slate-100">
+                                          <td className="py-1.5 px-2 font-medium text-slate-700">{s.label}</td>
+                                          <td className="py-1.5 px-2">
+                                            <span className="flex items-center gap-1">
+                                              {statusIcon(val.status)}
+                                              <span className={
+                                                val.status === "passed"
+                                                  ? "text-emerald-600"
+                                                  : val.status === "warning"
+                                                    ? "text-amber-600"
+                                                    : "text-red-600"
+                                              }>{val.status.charAt(0).toUpperCase() + val.status.slice(1)}</span>
+                                            </span>
+                                          </td>
+                                          <td className="py-1.5 px-2 text-right">
+                                            <span className={
+                                              acc.score >= 90
+                                                ? "text-emerald-600"
+                                                : acc.score >= 70
+                                                  ? "text-amber-600"
+                                                  : "text-red-600"
+                                            }>{acc.score}/100</span>
+                                          </td>
+                                          <td className="py-1.5 px-2 text-right text-slate-500">{passedChecks}/{val.checks.length}</td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                  <tfoot>
+                                    <tr className="border-t border-slate-200 font-semibold">
+                                      <td className="py-2 px-2 text-slate-700" colSpan={2}>Rata-rata Akurasi</td>
+                                      <td className="py-2 px-2 text-right text-[#00a991]">{avgScore}/100</td>
+                                      <td></td>
+                                    </tr>
+                                  </tfoot>
+                                </table>
+                              </div>
+                            </div>
+                            <details className="border border-slate-200 rounded-lg overflow-hidden group/detail">
+                              <summary className="px-3 py-2 bg-slate-50 cursor-pointer text-xs font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-2 list-none [&::-webkit-details-marker]:hidden">
+                                <ChevronRight className="h-3 w-3 text-slate-400 transition-transform group-open/detail:rotate-90" />
+                                Detail Setiap Stage
+                              </summary>
+                              <div className="divide-y divide-slate-100">
+                                {stages.map((s) => {
+                                  const val = validation[s.key];
+                                  const acc = accuracy[s.key];
+                                  return (
+                                    <details key={s.key} className="group/stage">
+                                      <summary className="px-3 py-2 cursor-pointer text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 list-none [&::-webkit-details-marker]:hidden">
+                                        <ChevronRight className="h-3 w-3 text-slate-400 transition-transform group-open/stage:rotate-90" />
+                                        {s.label}
+                                        <span className="ml-auto flex items-center gap-2">
+                                          {statusIcon(val.status)}
+                                          <span className={
+                                            acc.score >= 90
+                                              ? "text-emerald-600"
+                                              : acc.score >= 70
+                                                ? "text-amber-600"
+                                                : "text-red-600"
+                                          }>{acc.score}%</span>
+                                        </span>
+                                      </summary>
+                                      <div className="px-4 py-2 space-y-2 bg-slate-50/50">
+                                        <div>
+                                          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Validasi</p>
+                                          {val.checks.map((c, i) => (
+                                            <div key={i} className="flex items-start gap-1.5 text-[11px]">
+                                              {statusIcon(c.status)}
+                                              <div>
+                                                <span className="font-medium text-slate-700">{c.name}</span>
+                                                <p className="text-slate-500">{c.message.replace(/^[✓✗]\s*/, "")}</p>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div>
+                                          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Akurasi</p>
+                                          {acc.checks.map((c, i) => (
+                                            <div key={i} className="flex items-start gap-1.5 text-[11px]">
+                                              {statusIcon(c.status)}
+                                              <div className="flex-1 min-w-0">
+                                                <span className="font-medium text-slate-700">{c.name}</span>
+                                                <p className="text-slate-500">{c.message.replace(/^[✓✗]\s*/, "")}</p>
+                                                {c.detail && <p className="text-slate-400 italic">{c.detail}</p>}
+                                              </div>
+                                              <span className="shrink-0 text-[10px] font-mono text-slate-400">{c.score}/100</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </details>
+                                  );
+                                })}
+                              </div>
+                            </details>
+                          </div>
+                        </details>
+                      );
+                    })()}
+
+                    {/* ─── XAI Section ─────────────────────────────── */}
+                    {nlpResult?.pipeline.step5_xai && (() => {
+                      const xai = nlpResult.pipeline.step5_xai;
+                      return (
+                        <details className="border border-slate-200 rounded-xl overflow-hidden mt-4 group">
+                          <summary className="px-4 py-2.5 bg-slate-50 cursor-pointer text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2 list-none [&::-webkit-details-marker]:hidden">
+                            <Sparkles className="h-4 w-4 text-[#00a991] shrink-0" />
+                            <span>Explainability (XAI) — Mengapa kesimpulan ini?</span>
+                            <ChevronRight className="h-4 w-4 ml-auto text-slate-400 transition-transform group-open:rotate-90" />
+                          </summary>
+                          <div className="p-4 space-y-5 text-sm">
+
+                            {/* ── Tokenizing XAI ── */}
+                            {xai.tokenizing.classifications.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+                                  <Search className="h-3.5 w-3.5 text-[#00a991]" /> Klasifikasi Parameter
+                                </h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {xai.tokenizing.classifications.map((c, i) => (
+                                    <div key={i} className="bg-slate-50 rounded-lg px-3 py-2 text-xs">
+                                      <span className="text-slate-400">{c.parameter}: </span>
+                                      <span className="font-mono text-slate-700">{c.rawValue}</span>
+                                      <span className="text-slate-400"> → </span>
+                                      <span className="font-medium text-[#00a991]">{c.label}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* ── Stemming XAI ── */}
+                            {xai.stemming.concepts.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+                                  <BarChart3 className="h-3.5 w-3.5 text-[#00a991]" /> Bobot Konsep & Boost
+                                </h4>
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-xs">
+                                    <thead>
+                                      <tr className="text-slate-400 border-b border-slate-200">
+                                        <th className="text-left py-1.5 pr-2">Konsep</th>
+                                        <th className="text-center py-1.5 px-2">Dasar</th>
+                                        <th className="text-center py-1.5 px-2">Boost</th>
+                                        <th className="text-center py-1.5 px-2">Final</th>
+                                        <th className="text-left py-1.5 pl-2">Sumber Boost</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {xai.stemming.concepts.map((c, i) => (
+                                        <tr key={i} className="border-b border-slate-100">
+                                          <td className="py-1.5 pr-2">
+                                            <span className="font-medium text-slate-700">{c.humanLabel}</span>
+                                            <span className={`ml-1.5 text-[10px] px-1 py-0.5 rounded ${
+                                              c.sentiment === "positif" ? "bg-emerald-100 text-emerald-700" :
+                                              c.sentiment === "netral" ? "bg-blue-100 text-blue-700" :
+                                              c.sentiment === "waspada" ? "bg-amber-100 text-amber-700" :
+                                              "bg-red-100 text-red-700"
+                                            }`}>{c.sentiment}</span>
+                                          </td>
+                                          <td className="text-center py-1.5 px-2 text-slate-500">{c.baseWeight.toFixed(2)}</td>
+                                          <td className="text-center py-1.5 px-2">
+                                            {c.boostAmount > 0 ? (
+                                              <span className="text-amber-600 font-medium">+{c.boostAmount.toFixed(2)}</span>
+                                            ) : (
+                                              <span className="text-slate-300">—</span>
+                                            )}
+                                          </td>
+                                          <td className="text-center py-1.5 px-2 font-medium text-slate-700">{c.finalWeight.toFixed(2)}</td>
+                                          <td className="py-1.5 pl-2 text-[10px] text-slate-400 max-w-32 truncate" title={c.boostSources.join(", ")}>
+                                            {c.boostSources.length > 0 ? c.boostSources.join(", ") : "—"}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <p className="text-[10px] text-slate-400 mt-1">
+                                  Bobot 0.0–1.0. Boost berasal dari rule reasoning yang mendeteksi kombinasi konsep berbahaya.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* ── Features XAI ── */}
+                            <div>
+                              <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+                                <TrendingUp className="h-3.5 w-3.5 text-[#00a991]" /> Faktor Penguat (N-gram & TF-IDF)
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {xai.features.ngramBoosts.length > 0 && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs font-medium text-slate-500 mb-1.5">N-gram dengan Domain Boost</p>
+                                    <div className="space-y-1.5">
+                                      {xai.features.ngramBoosts.slice(0, 5).map((ng, i) => (
+                                        <div key={i} className="text-[11px]">
+                                          <span className="font-mono text-slate-700">{ng.ngram}</span>
+                                          <span className="text-slate-400 mx-1">→</span>
+                                          <span className="font-medium text-amber-600">{ng.boost}x</span>
+                                          {ng.boost > 1 && (
+                                            <p className="text-[10px] text-slate-400 ml-1">{ng.boostReason}</p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {xai.features.tfidfHighlights.length > 0 && (
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs font-medium text-slate-500 mb-1.5">TF-IDF Term Signifikan</p>
+                                    <div className="space-y-1.5">
+                                      {xai.features.tfidfHighlights.slice(0, 5).map((t, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-[11px]">
+                                          <span className="font-mono text-slate-700 min-w-20">{t.term}</span>
+                                          <span className="text-slate-400">TF-IDF: {t.tfidf.toFixed(4)}</span>
+                                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                            t.significance === "tinggi" ? "bg-red-100 text-red-600" :
+                                            t.significance === "sedang" ? "bg-amber-100 text-amber-600" :
+                                            "bg-slate-100 text-slate-500"
+                                          }`}>{t.significance}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* ── Reasoning XAI ── */}
+                            <div>
+                              <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+                                <Zap className="h-3.5 w-3.5 text-[#00a991]" /> Rule Reasoning Aktif ({xai.reasoning.activeRules.length}/{xai.reasoning.totalRules})
+                              </h4>
+                              {xai.reasoning.activeRules.length === 0 ? (
+                                <p className="text-xs text-slate-400 italic">Tidak ada rule yang aktif untuk kondisi cuaca saat ini.</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {xai.reasoning.activeRules.map((rule, i) => (
+                                    <div key={i} className="bg-slate-50 rounded-lg p-3 border-l-4 border-[#00a991]">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                          <p className="text-xs font-semibold text-slate-700">
+                                            <span className="font-mono text-[#00a991]">#{rule.ruleId}</span> {rule.label}
+                                          </p>
+                                          <p className="text-[10px] text-slate-400 mt-0.5">
+                                            Kondisi: {rule.matchedConditions.map((c, j) => (
+                                              <span key={j} className="inline-block bg-white px-1.5 py-0.5 rounded text-slate-600 font-mono mx-0.5">{c}</span>
+                                            ))}
+                                          </p>
+                                          <p className="text-[10px] text-slate-500 mt-1">{rule.advice}</p>
+                                        </div>
+                                        <span className={`shrink-0 text-[10px] font-semibold px-2 py-1 rounded-full whitespace-nowrap ${
+                                          rule.severity < 0 ? "bg-emerald-100 text-emerald-700" :
+                                          rule.severity >= 0.4 ? "bg-red-100 text-red-700" :
+                                          "bg-amber-100 text-amber-700"
+                                        }`}>
+                                          {rule.impactDescription}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* ── Sentiment XAI ── */}
+                            <div>
+                              <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+                                <ShieldAlert className="h-3.5 w-3.5 text-[#00a991]" /> Detail Sentimen
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="bg-slate-50 rounded-lg p-3">
+                                  <p className="text-xs font-medium text-slate-500 mb-1.5">Distribusi per Kategori</p>
+                                  <div className="space-y-2">
+                                    {xai.sentiment.breakdownDetail.filter(b => b.count > 0).map((b, i) => (
+                                      <div key={i}>
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className={`font-medium ${
+                                            b.category === "Positif" ? "text-emerald-600" :
+                                            b.category === "Netral" ? "text-blue-600" :
+                                            b.category === "Waspada" ? "text-amber-600" :
+                                            "text-red-600"
+                                          }`}>{b.category}</span>
+                                          <span className="text-slate-400">{b.count} konsep ({b.percentage}%)</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
+                                          {b.concepts.join(", ")}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs font-medium text-slate-500 mb-1">Penjelasan Skor</p>
+                                    <p className="text-[11px] text-slate-600 leading-relaxed">{xai.sentiment.scoreExplanation}</p>
+                                  </div>
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs font-medium text-slate-500 mb-1">Penjelasan Label</p>
+                                    <p className="text-[11px] text-slate-600 leading-relaxed">{xai.sentiment.labelExplanation}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* ── Highlight XAI ── */}
+                            <div>
+                              <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+                                <AlertTriangle className="h-3.5 w-3.5 text-[#00a991]" /> Alasan Highlight
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {xai.highlights.warnings.length > 0 && (
+                                  <div className="bg-red-50 rounded-lg p-3">
+                                    <p className="text-xs font-semibold text-red-700 mb-1.5 flex items-center gap-1">
+                                      <ShieldAlert className="h-3 w-3" /> Perlu Diwaspadai
+                                    </p>
+                                    <div className="space-y-1.5">
+                                      {xai.highlights.warnings.map((w, i) => (
+                                        <div key={i} className="text-xs">
+                                          <p className="font-medium text-red-700">{w.text}</p>
+                                          <p className="text-[10px] text-red-500 mt-0.5">{w.reason}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {xai.highlights.positives.length > 0 && (
+                                  <div className="bg-emerald-50 rounded-lg p-3">
+                                    <p className="text-xs font-semibold text-emerald-700 mb-1.5 flex items-center gap-1">
+                                      <CheckCircle className="h-3 w-3" /> Kondisi Positif
+                                    </p>
+                                    <div className="space-y-1.5">
+                                      {xai.highlights.positives.map((p, i) => (
+                                        <div key={i} className="text-xs">
+                                          <p className="font-medium text-emerald-700">{p.text}</p>
+                                          <p className="text-[10px] text-emerald-500 mt-0.5">{p.reason}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                          </div>
+                        </details>
+                      );
+                    })()}
                   </div>
                 </div>
               )}

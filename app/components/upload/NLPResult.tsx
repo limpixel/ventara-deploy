@@ -1,4 +1,5 @@
 import { downloadCsv } from "@/app/lib/api";
+import ReactMarkdown from "react-markdown";
 
 interface Props {
   nlpReport: string;
@@ -37,16 +38,27 @@ export default function NLPResult({
             AI Forecast Summary
           </h3>
 
-          <p className="text-sm text-gray-700 leading-relaxed">
+          <ReactMarkdown
+            components={{
+              p: ({ children }) => (
+                <p className="text-sm text-gray-700 leading-relaxed text-justify mb-2 last:mb-0">
+                  {children}
+                </p>
+              ),
+              strong: ({ children }) => (
+                <strong className="font-semibold text-gray-900">{children}</strong>
+              ),
+            }}
+          >
             {nlpReport}
-          </p>
+          </ReactMarkdown>
 
           {/* ACTIONS */}
           {!hideActions && (  
           <div className="mt-4 pt-4 border-t border-teal-100 flex gap-3">
             <button
               onClick={() => downloadCsv(generateMode)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white font-medium rounded-lg text-sm hover:bg-teal-700 transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white font-medium rounded-lg text-sm hover:bg-teal-700 transition-colors cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -57,14 +69,14 @@ export default function NLPResult({
 
             <button
               onClick={() => window.location.href = "/overview"}
-              className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white font-medium rounded-lg text-sm hover:bg-teal-700 transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white font-medium rounded-lg text-sm hover:bg-teal-700 transition-colors cursor-pointer"
             >
               View Overall
             </button>
 
             <button
               onClick={onReset}
-              className="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
             >
               Reset
             </button>
