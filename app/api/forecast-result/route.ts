@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PYTHON_API } from "../_config";
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,7 +9,7 @@ export async function GET(req: NextRequest) {
     const var_ = searchParams.get("var")  ?? "WS10M";
 
     const res = await fetch(
-      `http://127.0.0.1:5000/forecast_result?mode=${mode}&var=${var_}`,
+      `${PYTHON_API}/forecast_result?mode=${mode}&var=${var_}`,
       { cache: "no-store", headers: { cookie } }
     );
     const data = await res.json();

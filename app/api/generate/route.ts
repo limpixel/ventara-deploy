@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PYTHON_API } from "../_config";
 
 export async function POST(req: NextRequest) {
 
@@ -7,7 +8,7 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
 
   const res = await fetch(
-    "http://127.0.0.1:5000/generate_full",
+    `${PYTHON_API}/generate_full`,
     {
       method: "POST",
       headers: {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { PYTHON_API } from "../_config";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -6,7 +7,7 @@ export async function GET(req: Request) {
 
   const cookie = req.headers.get("cookie") || "";  // ← tambah
 
-  const res = await fetch(`http://127.0.0.1:5000/download_full/${mode}`, {
+  const res = await fetch(`${PYTHON_API}/download_full/${mode}`, {
     cache: "no-store",
     headers: { cookie },  // ← tambah
   });

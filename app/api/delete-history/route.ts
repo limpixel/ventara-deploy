@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PYTHON_API } from "../_config";
 
 export async function DELETE(req: NextRequest) {
   const username = req.nextUrl.searchParams.get("username") || "";
   const id = req.nextUrl.searchParams.get("id") || "";
-  const res = await fetch(`http://127.0.0.1:5000/delete_history?id=${id}`, {
+  const res = await fetch(`${PYTHON_API}/delete_history?id=${id}`, {
     method: "DELETE",
     headers: {
       "X-Username": username,

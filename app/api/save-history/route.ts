@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PYTHON_API } from "../_config";
 
 export async function POST(req: NextRequest) {
   const username = req.nextUrl.searchParams.get("username") || "";
   const body = await req.json();
-  const res = await fetch("http://127.0.0.1:5000/save_history", {
+  const res = await fetch(`${PYTHON_API}/save_history`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

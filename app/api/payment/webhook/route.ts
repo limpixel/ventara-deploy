@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
+import { PYTHON_API } from "../../_config"
 
 const DATA_DIR = path.join(process.cwd(), "data", "payments")
 
@@ -67,8 +68,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (username) {
-        const pythonUrl = process.env.PYTHON_API_URL || "http://localhost:5000"
-        await fetch(`${pythonUrl}/upgrade_tier`, {
+        await fetch(`${PYTHON_API}/upgrade_tier`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

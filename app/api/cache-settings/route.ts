@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const FLASK_API = "http://localhost:5000";
+import { PYTHON_API } from "../_config";
 
 export async function GET(req: NextRequest) {
   try {
     const username = req.nextUrl.searchParams.get("username") || "";
 
-    const res = await fetch(`${FLASK_API}/cache_settings`, {
+    const res = await fetch(`${PYTHON_API}/cache_settings`, {
       cache: "no-store",
       headers: {
         "X-Username": username,
@@ -35,7 +34,7 @@ export async function POST(req: NextRequest) {
     const username = req.nextUrl.searchParams.get("username") || "";
     const body = await req.json();
 
-    const res = await fetch(`${FLASK_API}/cache_settings`, {
+    const res = await fetch(`${PYTHON_API}/cache_settings`, {
       method: "POST",
       cache: "no-store",
       headers: {

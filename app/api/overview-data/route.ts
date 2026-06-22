@@ -3,7 +3,7 @@ import { PYTHON_API } from "../_config";
 
 export async function GET(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
-  const res = await fetch(`${PYTHON_API}/eda_summary`, {
+  const res = await fetch(`${PYTHON_API}/overview_data`, {
     cache: "no-store",
     headers: { cookie },
   });

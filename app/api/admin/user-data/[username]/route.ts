@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PYTHON_API } from "../../../_config";
 
 export async function GET(
   req: NextRequest,
@@ -6,7 +7,7 @@ export async function GET(
 ) {
   const cookie = req.headers.get("cookie") || "";
   const res = await fetch(
-    `http://127.0.0.1:5000/user-data/${params.username}`,
+    `${PYTHON_API}/user-data/${params.username}`,
     { headers: { cookie } }
   );
   const data = await res.json();
@@ -20,7 +21,7 @@ export async function PUT(
   const cookie = req.headers.get("cookie") || "";
   const body = await req.json();
   const res = await fetch(
-    `http://127.0.0.1:5000/user-data/${params.username}`,
+    `${PYTHON_API}/user-data/${params.username}`,
     {
       method: "PUT",
       headers: {
