@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../_config";
+
+const PYTHON_API = process.env.PYTHON_API_URL;
 
 export async function GET(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
-  const xUsername = req.headers.get("x-username") || "";
+  const username = req.nextUrl.searchParams.get("username") || "";
 
   const res = await fetch(
-    `${PYTHON_API}/train_progress`,
+    `${PYTHON_API}/train_progress?username=${username}`,
     {
       method: "GET",
-      headers: { Cookie: cookie, "X-Username": xUsername },
+      headers: { Cookie: cookie },
       cache: "no-store",
     }
   );

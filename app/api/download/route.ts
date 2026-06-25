@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { PYTHON_API } from "../_config";
+
+const FLASK_API = process.env.PYTHON_API_URL;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -7,7 +8,7 @@ export async function GET(req: Request) {
 
   const cookie = req.headers.get("cookie") || "";  // ← tambah
 
-  const res = await fetch(`${PYTHON_API}/download_full/${mode}`, {
+  const res = await fetch(`${FLASK_API}/download_full/${mode}`, {
     cache: "no-store",
     headers: { cookie },  // ← tambah
   });

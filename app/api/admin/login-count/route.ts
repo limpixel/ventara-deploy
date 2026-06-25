@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../../_config";
 
 export async function GET(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
-  const res = await fetch(`${PYTHON_API}/login-count`, {
+  const res = await fetch("http://127.0.0.1:5000/login-count", {
     headers: { cookie },
   });
   const data = await res.json();

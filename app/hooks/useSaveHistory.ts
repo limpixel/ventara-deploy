@@ -4,21 +4,27 @@ import toast from "react-hot-toast";
 
 interface SaveHistoryPayload {
   file: string;
+  output_file: string;
   algo: string;
   periode: string;
   nlp_report: string;
   forecast_data?: object | null;
-  onStorageFull?: () => void;  // ← callback
+  metrics?: object | null;
+  ensemble_components?: object | null;
+  onStorageFull?: () => void;
 }
 
 export function useSaveHistory() {
 
   const saveHistory = async ({
     file,
+    output_file,
     algo,
     periode,
     nlp_report,
     forecast_data,
+    metrics,
+    ensemble_components,
     onStorageFull,
   }: SaveHistoryPayload) => {
 
@@ -27,15 +33,18 @@ export function useSaveHistory() {
         id: Date.now(),
         waktu: new Date().toLocaleString("id-ID"),
         file,
+        output_file,
         algo,
         periode,
         status: "Selesai",
         nlp_report,
         forecast_data: forecast_data ?? null,
+        metrics: metrics ?? null,
+        ensemble_components: ensemble_components ?? null,
       };
 
       const username = sessionStorage.getItem("ventara_username");
-      const res = await fetch("/api/save-history", {
+      const res = await fetch(`${process.env.PYTHON_API_URL}/save_history`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

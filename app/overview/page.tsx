@@ -55,7 +55,7 @@ export default function OverviewPage() {
   const [activeVar, setActiveVar] = useState("WS10M");
   const [activeTab, setActiveTab] = useState<AnalysisTab>("eda");
   const [forecastData, setForecastData] = useState<ForecastData | null>(null);
-
+  const [fromHistory, setFromHistory] = useState(false);
   const { dataset_name } = useMetrics();
 
   const {
@@ -86,23 +86,37 @@ export default function OverviewPage() {
     const savedMode = sessionStorage.getItem(
       `ventara_generate_mode_${username}`,
     );
+    const isFromHistory = new URLSearchParams(window.location.search).get("from") === "history";
+    if (isFromHistory) {
+      setFromHistory(true);
+      // ← hapus param dari URL tanpa reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
     const savedVar = sessionStorage.getItem(`ventara_active_var_${username}`);
     const savedForecast = sessionStorage.getItem(
       `ventara_forecast_data_${username}`,
     );
+    const parsedMode = (savedMode ?? "general") as "general" | "best";
+
     if (savedForecast) {
       try {
-        setForecastData(JSON.parse(savedForecast));
+        const parsed = JSON.parse(savedForecast);
+        console.log("parsed.mode:", parsed.mode, "parsedMode:", parsedMode); // ← tambah di sini
+        if (parsed.mode === parsedMode) {
+          setForecastData(parsed);
+        } else {
+          sessionStorage.removeItem(`ventara_forecast_data_${username}`);
+        }
       } catch {}
     }
 
     if (savedReport) setNlpReport(savedReport);
-    if (savedMode) setGenerateMode(savedMode as "general" | "best");
+    if (savedMode) setGenerateMode(parsedMode);
     if (savedVar) setActiveVar(savedVar);
 
     // ✅ skip fetch backend kalau sessionStorage udah punya data
     if (!savedReport && !savedMode) {
-      fetch("/api/overview-data")
+      fetch(`${process.env.PYTHON_API_URL}/overview_data`, { credentials: "include" })
         .then((res) => res.json())
         .then((data) => {
           if (data.nlp_report) setNlpReport(data.nlp_report);
@@ -127,6 +141,7 @@ export default function OverviewPage() {
                 generateMode={generateMode}
                 nlpReport={nlpReport}
                 forecastData={forecastData}
+                fromHistory={fromHistory} // ← tambah
               />
             </div>
 

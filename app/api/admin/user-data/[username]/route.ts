@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../../../_config";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ username: string }> }
+  { params }: { params: { username: string } }
 ) {
-  const { username } = await params;
   const cookie = req.headers.get("cookie") || "";
   const res = await fetch(
-    `${PYTHON_API}/user-data/${username}`,
+    `http://127.0.0.1:5000/user-data/${params.username}`,
     { headers: { cookie } }
   );
   const data = await res.json();
@@ -17,13 +15,12 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ username: string }> }
+  { params }: { params: { username: string } }
 ) {
-  const { username } = await params;
   const cookie = req.headers.get("cookie") || "";
   const body = await req.json();
   const res = await fetch(
-    `${PYTHON_API}/user-data/${username}`,
+    `http://127.0.0.1:5000/user-data/${params.username}`,
     {
       method: "PUT",
       headers: {

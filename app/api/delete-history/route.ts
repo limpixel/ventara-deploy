@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../_config";
+
+const FLASK_API = process.env.PYTHON_API_URL;
 
 export async function DELETE(req: NextRequest) {
   const username = req.nextUrl.searchParams.get("username") || "";
   const id = req.nextUrl.searchParams.get("id") || "";
-  const res = await fetch(`${PYTHON_API}/delete_history?id=${id}`, {
+  const res = await fetch(`${FLASK_API}/delete_history?id=${id}`, {
     method: "DELETE",
     headers: {
       "X-Username": username,

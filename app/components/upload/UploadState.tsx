@@ -55,7 +55,7 @@ export default function UploadState({
   }
 
   async function handleResetDataset() {
-    const res = await fetch("/api/reset-dataset", {
+    const res = await fetch(`${process.env.PYTHON_API_URL}/reset_dataset`, {
       method: "POST",
       credentials: "include",
     });
@@ -85,12 +85,11 @@ export default function UploadState({
         <UpgradeModal
           storageInfo={storageInfo}
           onClose={closeUpgradeModal}
-          onSuccess={async () => {
-            await refreshStorage();
+          onSuccess={() =>
             retryAfterUpgrade(() =>
               train.startTrainToast(() => { onTrainingComplete?.(); })
             )
-          }}
+          }
         />
       )}
 

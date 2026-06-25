@@ -71,7 +71,7 @@ export default function EditProfilePage() {
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch("/api/update-profile", {
+      const res = await fetch(`${process.env.PYTHON_API_URL}/update_profile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -117,7 +117,7 @@ export default function EditProfilePage() {
     }
     setSavingPassword(true);
     try {
-      const res = await fetch("/api/change-password", {
+      const res = await fetch(`${process.env.PYTHON_API_URL}/change_password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

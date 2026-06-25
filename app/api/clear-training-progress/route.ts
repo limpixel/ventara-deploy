@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../_config";
+
+const FLASK_API = process.env.PYTHON_API_URL;
 
 export async function POST(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
-  const xUsername = req.headers.get("x-username") || "";
 
-  const res = await fetch(`${PYTHON_API}/clear_train_progress`, {
+  const res = await fetch(`${FLASK_API}/clear_train_progress`, {
     method: "POST",
     headers: {
       Cookie: cookie,
-      "X-Username": xUsername,
     },
   });
 

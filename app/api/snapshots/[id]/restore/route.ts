@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../../../_config";
+
+const PYTHON_API = process.env.PYTHON_API_URL;
 
 export async function POST(
   req: NextRequest,

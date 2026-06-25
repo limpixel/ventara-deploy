@@ -1,23 +1,22 @@
-  // generate-progress/route.ts
-  import { NextRequest, NextResponse } from "next/server";
-  import { PYTHON_API } from "../_config";
+import { NextRequest, NextResponse } from "next/server";
+const FLASK_API = process.env.PYTHON_API_URL;
 
-  export async function GET(req: NextRequest) {
-    const cookie = req.headers.get("cookie") || "";
-    const xUsername = req.headers.get("x-username") || "";
 
-    const res = await fetch(
-      `${PYTHON_API}/generate_progress`,
-      {
-        cache: "no-store",
-        headers: {
-          cookie,
-          "X-Username": xUsername,
-        },
-      }
-    );
+export async function GET(req: NextRequest) {
 
-    const data = await res.json();
+  const cookie = req.headers.get("cookie") || "";
 
-    return NextResponse.json(data);
-  }
+  const res = await fetch(
+    `${FLASK_API}/generate_progress`,
+    {
+      cache: "no-store",
+      headers: {
+        cookie,
+      },
+    }
+  );
+
+  const data = await res.json();
+
+  return NextResponse.json(data);
+}

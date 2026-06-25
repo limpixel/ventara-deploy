@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../_config";
+
+const FLASK_API = process.env.PYTHON_API_URL;
 
 export async function GET(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
-  const res = await fetch(`${PYTHON_API}/eda_summary`, {
+  const res = await fetch(`${FLASK_API}/eda_summary`, {
     cache: "no-store",
     headers: { cookie },
   });

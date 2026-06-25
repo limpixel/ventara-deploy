@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../_config";
+
+const FLASK_API = process.env.PYTHON_API_URL;
 
 export async function GET(req: NextRequest) {
   try {
     const username = req.nextUrl.searchParams.get("username") || "";
 
-    const res = await fetch(`${PYTHON_API}/cache_settings`, {
+    const res = await fetch(`${FLASK_API}/cache_settings`, {
       cache: "no-store",
       headers: {
         "X-Username": username,
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       return NextResponse.json(
         { success: false, error: `Flask returned ${res.status}` },
-        { status: res.status }
+        { status: res.status },
       );
     }
 
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     return NextResponse.json(
       { success: false, error: String(err) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     const username = req.nextUrl.searchParams.get("username") || "";
     const body = await req.json();
 
-    const res = await fetch(`${PYTHON_API}/cache_settings`, {
+    const res = await fetch(`${FLASK_API}/cache_settings`, {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       return NextResponse.json(
         { success: false, error: `Flask returned ${res.status}` },
-        { status: res.status }
+        { status: res.status },
       );
     }
 
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return NextResponse.json(
       { success: false, error: String(err) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

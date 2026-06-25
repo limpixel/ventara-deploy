@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PYTHON_API } from "../_config";
-
 export async function POST(req: NextRequest) {
+  const username = req.nextUrl.searchParams.get("username") || "";
   const cookie = req.headers.get("cookie") || "";
-  const xUsername = req.headers.get("x-username") || "";
-  const res = await fetch(`${PYTHON_API}/cancel_generate`, {
+  const res = await fetch(`${process.env.PYTHON_API_URL}/cancel_generate`, {
     method: "POST",
-    headers: { cookie, "X-Username": xUsername },
+    headers: { 
+      "X-Username": username,
+      "cookie": cookie,  // ← tambah ini
+    },
   });
   const data = await res.json();
   return NextResponse.json(data);
