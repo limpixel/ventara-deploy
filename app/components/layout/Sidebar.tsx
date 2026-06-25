@@ -63,7 +63,7 @@ export default function Sidebar() {
       console.error("Cancel training on logout failed:", e);
     }
 
-    await fetch(`${process.env.PYTHON_API_URL}/logout`, {
+    await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/logout`, {
       method: "POST",
       credentials: "include",
     });
