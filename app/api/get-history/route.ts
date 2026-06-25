@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const username = req.headers.get("x-username") || "";
 
   try {
-    const res = await fetch(`/api/get-history?username=${username}`, {
+    const res = await fetch(`${PYTHON_API}/get_history`, {
       cache: "no-store",
       headers: {
         "X-Username": username,
