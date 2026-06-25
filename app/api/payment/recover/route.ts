@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
 import { PYTHON_API } from "../../_config"
-
-const DATA_DIR = process.env.VERCEL ? path.join("/tmp", "payments") : path.join(process.cwd(), "data", "payments")
 
 const TIER_ORDER: Record<string, number> = {
   free: 0,
@@ -19,42 +15,9 @@ function parseReference(ref: string): { username: string; tier: string } | null 
   return null
 }
 
-async function savePaymentRecord(record: {
-  username: string
-  transaction_id: string
-  tier: string
-  amount: number
-  payment_type: string
-  reference: string
-}) {
-  const filePath = path.join(DATA_DIR, `${record.username}.json`)
-  let records: any[] = []
-  try {
-    const raw = await fs.readFile(filePath, "utf-8")
-    records = JSON.parse(raw)
-  } catch {}
-
-  const exists = records.some((r: any) => r.transaction_id === record.transaction_id)
-  if (exists) return records
-
-  records.push({
-    transaction_id: record.transaction_id,
-    tier: record.tier,
-    amount: record.amount,
-    payment_type: record.payment_type,
-    status: "settled",
-    reference: record.reference,
-    paid_at: new Date().toISOString(),
-  })
-
-  await fs.mkdir(DATA_DIR, { recursive: true })
-  await fs.writeFile(filePath, JSON.stringify(records, null, 2), "utf-8")
-  return records
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const { reference, transaction_id, amount, payment_type } = await req.json()
+    const { reference, transaction_id, amount, payment_type, paid_at } = await req.json()
 
     if (!reference) {
       return NextResponse.json(
@@ -80,16 +43,29 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const records = await savePaymentRecord({
-      username,
-      transaction_id: transaction_id || reference,
-      tier,
-      amount: amount || 2000,
-      payment_type: payment_type || "qris",
-      reference,
+    const paymentRes = await fetch(`${PYTHON_API}/payment_history`, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Username": username,
+      },
+      body: JSON.stringify({
+        transaction_id: transaction_id || reference,
+        tier,
+        amount: amount || 2000,
+        payment_type: payment_type || "qris",
+        reference,
+        paid_at: paid_at || new Date().toISOString(),
+      }),
     })
 
+    const paymentData = await paymentRes.json()
     console.log(`Recovery: payment saved for ${username} -> ${tier}`)
+
+    if (!paymentData.success) {
+      return NextResponse.json(paymentData, { status: 500 })
+    }
 
     try {
       const res = await fetch(`${PYTHON_API}/upgrade_tier`, {
@@ -106,8 +82,8 @@ export async function POST(req: NextRequest) {
         console.error(`Recovery: upgrade failed (${res.status}): ${errText}`)
         return NextResponse.json({
           success: true,
-          message: `Payment tersimpan, tapi upgrade tier gagal (${res.status}). Reconcile otomatis akan coba lagi.`,
-          records,
+          message: `Payment tersimpan, tapi upgrade tier gagal (${res.status}).`,
+          data: paymentData.data,
         })
       }
 
@@ -116,15 +92,15 @@ export async function POST(req: NextRequest) {
       console.error(`Recovery: upgrade error: ${err}`)
       return NextResponse.json({
         success: true,
-        message: "Payment tersimpan, tapi upgrade tier gagal (network). Reconcile otomatis akan coba lagi.",
-        records,
+        message: "Payment tersimpan, tapi upgrade tier gagal (network).",
+        data: paymentData.data,
       })
     }
 
     return NextResponse.json({
       success: true,
       message: `Payment recovered: ${username} -> ${tier}`,
-      records,
+      data: paymentData.data,
     })
   } catch (err) {
     console.error("Recovery error:", err)
