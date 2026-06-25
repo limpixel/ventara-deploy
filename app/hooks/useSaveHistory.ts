@@ -44,7 +44,7 @@ export function useSaveHistory() {
       };
 
       const username = sessionStorage.getItem("ventara_username");
-      const res = await fetch("http://localhost:5000/save_history", {
+      const res = await fetch(`${process.env.PYTHON_API_URL}/save_history`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

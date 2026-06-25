@@ -241,7 +241,9 @@ export default function OverfitChart({
       } catch {}
     }
 
-    fetch("http://localhost:5000/overfit_metrics", { credentials: "include" })
+    
+
+    fetch(`${process.env.PYTHON_API_URL}/overfit_metrics`, { credentials: "include" })
       .then((r) => r.json())
       .then((json) => {
         if (json.error) {
