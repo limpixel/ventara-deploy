@@ -228,11 +228,14 @@ export default function OverfitChart({
           selectedVarProp && metrics[selectedVarProp]
             ? selectedVarProp
             : (VAR_ORDER.find((v) => metrics[v]) ??
-              Object.keys(metrics)[0] ??
+              Object.keys(metrics ?? {})[0] ?? // 👈 tambah ?? {} di sini
               "");
+
         const firstModel =
           modelMemory.current[firstVar] ??
-          Object.keys(metrics[firstVar] ?? {}).find((m) => !m.includes("+")) ??
+          Object.keys(metrics?.[firstVar] ?? {}).find(
+            (m) => !m.includes("+"),
+          ) ?? // 👈 optional chaining
           "";
         setSelectedVar(firstVar);
         setSelectedModelWithMemory(firstVar, firstModel);
@@ -241,10 +244,10 @@ export default function OverfitChart({
       } catch {}
     }
 
-    
-
     fetch(`/api/overfit-metrics`, {
-      headers: { "X-Username": sessionStorage.getItem("ventara_username") || "" }
+      headers: {
+        "X-Username": sessionStorage.getItem("ventara_username") || "",
+      },
     })
       .then((r) => r.json())
       .then((json) => {
@@ -264,13 +267,14 @@ export default function OverfitChart({
           selectedVarProp && metrics[selectedVarProp]
             ? selectedVarProp
             : (VAR_ORDER.find((v) => metrics[v]) ??
-              Object.keys(metrics)[0] ??
+              Object.keys(metrics ?? {})[0] ?? // 👈 tambah ?? {} di sini
               "");
 
-        // ✅ filter ensemble key dari default model
         const firstModel =
           modelMemory.current[firstVar] ??
-          Object.keys(metrics[firstVar] ?? {}).find((m) => !m.includes("+")) ??
+          Object.keys(metrics?.[firstVar] ?? {}).find(
+            (m) => !m.includes("+"),
+          ) ?? // 👈 optional chaining
           "";
 
         setSelectedVar(firstVar);
@@ -280,7 +284,7 @@ export default function OverfitChart({
       .finally(() => setLoading(false));
   }, [selectedVarProp]);
 
-  const vars = Object.keys(data).sort(
+  const vars = Object.keys(data ?? {}).sort(
     (a, b) => VAR_ORDER.indexOf(a) - VAR_ORDER.indexOf(b),
   );
 
@@ -293,8 +297,8 @@ export default function OverfitChart({
 
   // ✅ displayMetrics dinamis dari data aktual (handle WD10M circular metrics)
   const displayMetrics = current
-  ? Object.keys(current.train).filter((m) => !EXCLUDE_KEYS.has(m))
-  : ["MAE", "RMSE", "sMAPE", "R2"];
+    ? Object.keys(current.train ?? {}).filter((m) => !EXCLUDE_KEYS.has(m)) // 👈
+    : ["MAE", "RMSE", "sMAPE", "R2"];
 
   // ensemble key untuk mode best
   const ensembleKey = (() => {

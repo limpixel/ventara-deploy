@@ -79,7 +79,7 @@ export default function ForecastChart({
   useEffect(() => {
     if (!initialData) return;
     setData(initialData as ForecastData);
-    const firstModel = Object.keys(initialData.predictions)[0];
+    const firstModel = Object.keys(initialData.predictions ?? {})[0];
     if (firstModel) setSelectedModel(firstModel);
     setLoading(false);
   }, [initialData]);
@@ -104,7 +104,7 @@ export default function ForecastChart({
         } else {
           setData(json);
           onDataLoaded?.(json);
-          const firstModel = Object.keys(json.predictions)[0];
+          const firstModel = Object.keys(json.predictions ?? {})[0];
           if (firstModel) setSelectedModel(firstModel);
         }
       } catch {

@@ -57,12 +57,12 @@ export function useMetrics(selectedVar: string = "WS10M") {
     const json = await res.json();
 
     // Kalau metrics kosong dan masih ada retry, coba lagi
-    if ((json.error || !json.metrics || Object.keys(json.metrics).length === 0) && retries > 0) {
+    if ((json.error || !json.metrics || typeof json.metrics !== "object" || Object.keys(json.metrics ?? {}).length === 0) && retries > 0) {
       setTimeout(() => fetchData(retries - 1, delayMs), delayMs);
       return;
     }
 
-    if (json.error || !json.metrics) return;
+    if (json.error || !json.metrics || typeof json.metrics !== "object") return;
     setData(json);
   } catch (e) {
     console.error("Failed to fetch metrics:", e);
