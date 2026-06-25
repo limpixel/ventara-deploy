@@ -137,11 +137,11 @@ export default function HistorisPage() {
     console.log("row.output_file:", row.output_file);
     console.log("fileToDownload:", fileToDownload);
     const res = await fetch(
-      `/api/download-history-csv?file=${encodeURIComponent(fileToDownload)}`,
-      {
-        headers: { "X-Username": username },
-      },
-    );
+    `/api/download-history-csv?file=${encodeURIComponent(fileToDownload)}`,
+    {
+      headers: { "X-Username": username },
+    },
+  );
     if (!res.ok) {
       alert("File tidak tersedia");
       return;
