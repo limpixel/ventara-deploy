@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PYTHON_API = process.env.PYTHON_API_URL;
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const username = req.headers.get("x-username") ?? "";
 
-  const res = await fetch(`${PYTHON_API}/generate_progress`, {
-    cache: "no-store",
+  const res = await fetch(`${PYTHON_API}/generate_commit`, {
+    method: "POST",
     headers: {
       "X-Username": username,
     },

@@ -55,7 +55,10 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
       const myGen = generation ?? pollGeneration.current;
       if (!pollActive.current || myGen !== pollGeneration.current) return;
       try {
-        const res = await fetch("/api/generate-progress");
+        const username = sessionStorage.getItem("ventara_username") ?? "";
+        const res = await fetch("/api/generate-progress", {
+          headers: { "X-Username": username },
+        });
         const prog = await res.json();
 
         const isBest = prog.mode === "best";
@@ -81,9 +84,10 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
         if (prog.done) {
           pollActive.current = false;
           setGenerate((prev) => ({ ...prev, percent: 100 }));
-          await fetch("http://localhost:5000/generate_commit", {
+          const username = sessionStorage.getItem("ventara_username") ?? "";
+          await fetch("/api/generate-commit", {
             method: "POST",
-            credentials: "include",
+            headers: { "X-Username": username },
           });
           setTimeout(() => {
             setGenerate(DEFAULT);
@@ -125,7 +129,10 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
       if (pollActive.current) return;
 
       try {
-        const res = await fetch("/api/generate-progress");
+        const username = sessionStorage.getItem("ventara_username") ?? "";
+        const res = await fetch("/api/generate-progress", {
+          headers: { "X-Username": username },
+        });
         const prog = await res.json();
 
         if (prog.running && !prog.done && !prog.error) {
@@ -177,7 +184,12 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
         formData.append("var", selectedVar);
         const endpoint =
           selectedModel === "best" ? "/api/generate-best" : "/api/generate";
-        const res = await fetch(endpoint, { method: "POST", body: formData });
+        const username = sessionStorage.getItem("ventara_username") ?? "";
+        const res = await fetch(endpoint, {
+          method: "POST",
+          body: formData,
+          headers: { "X-Username": username },
+        });
         const data = await res.json();
         if (data.status === "already_running") {
           setGenerate(DEFAULT);
@@ -211,7 +223,9 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
       // Tunggu BE konfirmasi berhenti, max 10 detik
       for (let i = 0; i < 10; i++) {
         await new Promise((r) => setTimeout(r, 500));
-        const res = await fetch("/api/generate-progress");
+        const res = await fetch("/api/generate-progress", {
+          headers: { "X-Username": username },
+        });
         const prog = await res.json();
         if (!prog.running || prog.done || prog.error) break;
       }
