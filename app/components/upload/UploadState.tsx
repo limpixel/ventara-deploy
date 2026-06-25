@@ -55,7 +55,7 @@ export default function UploadState({
   }
 
   async function handleResetDataset() {
-    const res = await fetch("http://localhost:5000/reset_dataset", {
+    const res = await fetch("/api/reset-dataset", {
       method: "POST",
       credentials: "include",
     });

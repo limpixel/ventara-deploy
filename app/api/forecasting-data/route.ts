@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { PYTHON_API } from "../_config";
 
 export async function GET(req: NextRequest) {
-  const username = req.nextUrl.searchParams.get("username") || "";
-  const varParam = req.nextUrl.searchParams.get("var") || "WS10M"; // ← tambah
+  const username = req.headers.get("x-username") || "";
+  const varParam = req.nextUrl.searchParams.get("var") || "WS10M";
 
   const res = await fetch(`${PYTHON_API}/forecasting_data?var=${varParam}`, { // ← tambah ?var=
     cache: "no-store",

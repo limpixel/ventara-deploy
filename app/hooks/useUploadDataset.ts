@@ -73,6 +73,12 @@ export function useUploadDataset() {
 
       if (data.status === "invalid") {
         setFileName("❌ " + (data.errors ?? []).join(", "));
+        return;
+      }
+
+      if (data.status === "error") {
+        setFileName("❌ " + (data.message || "Upload gagal"));
+        return;
       }
 
     } catch (err: unknown) {
@@ -108,6 +114,12 @@ export function useUploadDataset() {
       if (data.status === "started") {
         setFileName(`✅ ${pendingFilename} diupload. Training dimulai tanpa snapshot...`);
         onTrainingStarted?.();
+        return;
+      }
+
+      if (data.status === "error") {
+        setFileName("❌ " + (data.message || "Gagal melanjutkan training"));
+        return;
       }
     } catch {
       setFileName("❌ Gagal melanjutkan training");
@@ -161,6 +173,12 @@ export function useUploadDataset() {
           tier: data.tier,
           pendingFilename: data.filename ?? pendingFilename,
         });
+        return;
+      }
+
+      if (data.status === "error") {
+        setFileName("❌ " + (data.message || "Gagal melanjutkan training setelah upgrade"));
+        return;
       }
     } catch {
       setFileName("❌ Gagal melanjutkan training setelah upgrade");

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PYTHON_API } from "../_config";
 
 export async function POST(req: NextRequest) {
-  const username = req.nextUrl.searchParams.get("username") || "";
+  const username = req.headers.get("x-username") || "";
   const body = await req.json();
   const res = await fetch(`${PYTHON_API}/save_history`, {
     method: "POST",

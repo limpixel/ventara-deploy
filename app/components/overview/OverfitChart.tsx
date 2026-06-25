@@ -209,7 +209,7 @@ export default function OverfitChart({
   };
 
   useEffect(() => {
-    fetch("http://localhost:5000/overfit_metrics", { credentials: "include" })
+    fetch("/api/overfit-metrics")
       .then((r) => r.json())
       .then((json) => {
         if (json.error) {

@@ -170,7 +170,7 @@ export default function ForecastingPage() {
                   onClick={(e) => {
                     e.stopPropagation();
                     window.open(
-                      "http://localhost:5000/download_template",
+                      "/api/download-template",
                       "_blank",
                     );
                   }}

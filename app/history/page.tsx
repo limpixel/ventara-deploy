@@ -114,7 +114,7 @@ export default function HistorisPage() {
     const mode = row.algo === "Best Model" ? "best" : "general";
 
     const res = await fetch(
-      `http://localhost:5000/download_forecast?mode=${mode}`,
+      `/api/download-forecast?mode=${mode}`,
       {
         credentials: "include",
         headers: { "X-Username": username },

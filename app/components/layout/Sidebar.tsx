@@ -63,9 +63,8 @@ export default function Sidebar() {
       console.error("Cancel training on logout failed:", e);
     }
 
-    await fetch("http://localhost:5000/logout", {
+    await fetch("/api/logout", {
       method: "POST",
-      credentials: "include",
     });
 
     sessionStorage.clear();

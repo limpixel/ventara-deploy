@@ -89,9 +89,7 @@ export default function ForecastChart({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:5000/forecast_result?mode=${mode}&var=${localVar}`, {
-        credentials: "include",
-      });
+      const res = await fetch(`/api/forecast-result?mode=${mode}&var=${localVar}`);
       const json = await res.json();
       if (json.error) {
         setError(json.error);

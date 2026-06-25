@@ -102,7 +102,7 @@ export default function OverviewPage() {
 
     // ✅ skip fetch backend kalau sessionStorage udah punya data
     if (!savedReport && !savedMode) {
-      fetch("http://localhost:5000/overview_data", { credentials: "include" })
+      fetch("/api/overview-data")
         .then((res) => res.json())
         .then((data) => {
           if (data.nlp_report) setNlpReport(data.nlp_report);
