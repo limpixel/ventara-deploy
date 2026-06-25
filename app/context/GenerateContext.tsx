@@ -81,7 +81,7 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
         if (prog.done) {
           pollActive.current = false;
           setGenerate((prev) => ({ ...prev, percent: 100 }));
-          await fetch(`${process.env.PYTHON_API_URL}/generate_commit`, {
+          await fetch("http://localhost:5000/generate_commit", {
             method: "POST",
             credentials: "include",
           });

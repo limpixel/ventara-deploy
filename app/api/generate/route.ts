@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const FLASK_API = process.env.PYTHON_API_URL;
-
 export async function POST(req: NextRequest) {
 
   const cookie = req.headers.get("cookie") || "";
@@ -9,7 +7,7 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
 
   const res = await fetch(
-    `${FLASK_API}/generate_full`,
+    "http://127.0.0.1:5000/generate_full",
     {
       method: "POST",
       headers: {

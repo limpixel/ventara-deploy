@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const FLASK_API = process.env.PYTHON_API_URL;
-
-
 export async function POST(req: NextRequest) {
 
   const cookie = req.headers.get("cookie") || "";
 
   const res = await fetch(
-    `${FLASK_API}/generate_best`,
+    "http://127.0.0.1:5000/generate_best",
     {
       method: "POST",
       headers: {

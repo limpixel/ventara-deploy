@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const FLASK_API = process.env.PYTHON_API_URL;
+const FLASK_API = "http://localhost:5000";
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       return NextResponse.json(
         { success: false, error: `Flask returned ${res.status}` },
-        { status: res.status },
+        { status: res.status }
       );
     }
 
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     return NextResponse.json(
       { success: false, error: String(err) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       return NextResponse.json(
         { success: false, error: `Flask returned ${res.status}` },
-        { status: res.status },
+        { status: res.status }
       );
     }
 
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return NextResponse.json(
       { success: false, error: String(err) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

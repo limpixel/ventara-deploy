@@ -1,30 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PYTHON_API = process.env.PYTHON_API_URL;
-
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const res = await fetch(`${PYTHON_API}/login`, {
+  const res = await fetch("http://127.0.0.1:5000/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  const data = await res.json();
 
-  // DEBUG: log dulu sebelum parse
-  const text = await res.text();
-  console.log("Flask status:", res.status);
-  console.log("Flask content-type:", res.headers.get("content-type"));
-  console.log("Flask body:", text.slice(0, 300));
-
-  // Parse hanya kalau JSON
-  if (!res.headers.get("content-type")?.includes("application/json")) {
-    return NextResponse.json(
-      { error: "Flask error", detail: text.slice(0, 200) },
-      { status: 502 },
-    );
-  }
-
-  const data = JSON.parse(text);
+  // Forward Set-Cookie dari Flask ke browser.
+  // PENTING: res.headers.get("set-cookie") SELALU balikin null — itu batasan
+  // Fetch API spec (Set-Cookie gak bisa diakses lewat .get() biasa), BUKAN
+  // soal Flask gak ngirim cookie-nya. Harus pakai getSetCookie() yang
+  // balikin array string, baru di-append satu-satu ke response.
   const response = NextResponse.json(data, { status: res.status });
   const setCookies = res.headers.getSetCookie();
   for (const cookie of setCookies) {

@@ -52,7 +52,7 @@ export default function OverviewHeader({
                 let ensemble_components = null;
                 try {
                   const res = await fetch(
-                    `${process.env.PYTHON_API_URL}/overfit_metrics`,
+                    "http://localhost:5000/overfit_metrics",
                     {
                       credentials: "include",
                       headers: { "X-Username": username },

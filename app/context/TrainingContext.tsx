@@ -56,7 +56,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastStepRef = useRef({ step: "", time: Date.now() });
 
   const stopTraining = useCallback(() => {
     if (intervalRef.current) {
@@ -78,19 +77,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
         const data = await fetchTrainProgress();
 
-        const currentStep = data.step || "Berjalan...";
-        if (currentStep === lastStepRef.current.step) {
-          if (Date.now() - lastStepRef.current.time > 300000) { // 5 menit stuck
-            stopTraining();
-            return;
-          }
-        } else {
-          lastStepRef.current = { step: currentStep, time: Date.now() };
-        }
-
         const next: TrainingState = {
           isTraining: true,
-          step: currentStep,
+          step: data.step || "Berjalan...",
           progress: calcProgress(data.step ?? "", data.done),
           logs: data.log?.length ? data.log : [],
           footer: "Jangan tutup halaman ini",

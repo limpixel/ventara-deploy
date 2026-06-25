@@ -92,7 +92,7 @@ export default function ForecastChart({
       setError(null);
       try {
         const res = await fetch(
-          `${process.env.PYTHON_API_URL}/forecast_result?mode=${mode}&var=${localVar}`,
+          `http://localhost:5000/forecast_result?mode=${mode}&var=${localVar}`,
           {
             credentials: "include",
           },

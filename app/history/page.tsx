@@ -25,11 +25,14 @@ interface HistorisItem {
   id: number;
   waktu: string;
   file: string;
+  output_file?: string;
   algo: string;
   periode: string;
   status: StatusKey;
   nlp_report?: string;
   forecast_data?: object | null;
+  metrics?: object | null;
+  ensemble_components?: object | null;
 }
 
 const ALGO_STYLE: Record<AlgoKey, string> = {
@@ -98,8 +101,6 @@ export default function HistorisPage() {
     init();
   }, []);
 
-  console.log("DATA STATE =", data);
-
   const filtered = data.filter((d) => {
     const q = search.toLowerCase();
     return (
@@ -109,32 +110,6 @@ export default function HistorisPage() {
     );
   });
 
-  async function handleDownload(row: HistorisItem) {
-    const username = sessionStorage.getItem("ventara_username") || "";
-    const mode = row.algo === "Best Model" ? "best" : "general";
-
-    const res = await fetch(
-      `/api/download-forecast?mode=${mode}`,
-      {
-        credentials: "include",
-        headers: { "X-Username": username },
-      },
-    );
-
-    if (!res.ok) {
-      alert("File belum tersedia");
-      return;
-    }
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `hasil_prediksi_${mode}_${row.file}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   async function handleDelete(id: number) {
     const username = sessionStorage.getItem("ventara_username") || "";
     setDeletingId(id);
@@ -143,11 +118,37 @@ export default function HistorisPage() {
         method: "DELETE",
       });
       setData((prev) => prev.filter((d) => d.id !== id));
+      await refreshStorage(); // ← tambah
     } catch (error) {
       console.error("Failed to delete:", error);
     } finally {
       setDeletingId(null);
     }
+  }
+
+  async function handleDownloadCSV(row: HistorisItem) {
+    const username = sessionStorage.getItem("ventara_username") || "";
+    const fileToDownload = row.output_file || row.file;
+
+    console.log("row.file:", row.file);
+    console.log("row.output_file:", row.output_file);
+    console.log("fileToDownload:", fileToDownload);
+    const res = await fetch(
+      `/api/download-history-csv?username=${username}&file=${encodeURIComponent(fileToDownload)}`,
+    );
+    if (!res.ok) {
+      alert("File tidak tersedia");
+      return;
+    }
+
+    console.log("response status:", res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = row.output_file || row.file;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -326,17 +327,39 @@ export default function HistorisPage() {
                                   `ventara_nlp_report_${username}`,
                                   row.nlp_report || "",
                                 );
-                                sessionStorage.setItem(
-                                  `ventara_generate_mode_${username}`,
-                                  row.algo === "Best Model"
+                                const historyMode =
+                                  row.algo === "Best Model" ||
+                                  row.algo === "Best"
                                     ? "best"
-                                    : "general",
-                                );
+                                    : "general";
+                                const forecastWithMode = row.forecast_data
+                                  ? {
+                                      ...(row.forecast_data as object),
+                                      mode: historyMode,
+                                    }
+                                  : null;
                                 sessionStorage.setItem(
                                   `ventara_forecast_data_${username}`,
-                                  JSON.stringify(row.forecast_data ?? null),
+                                  JSON.stringify(forecastWithMode),
                                 );
-                                window.location.href = "/overview";
+                                sessionStorage.setItem(
+                                  `ventara_generate_mode_${username}`,
+                                  historyMode,
+                                );
+                                sessionStorage.setItem(
+                                  `ventara_overfit_metrics_${username}`,
+                                  JSON.stringify(row.metrics ?? null),
+                                );
+                                sessionStorage.setItem(
+                                  `ventara_ensemble_components_${username}`,
+                                  JSON.stringify(
+                                    row.ensemble_components ?? null,
+                                  ),
+                                );
+                                sessionStorage.removeItem(
+                                  `ventara_ensemble_summary_${username}`,
+                                );
+                                window.location.href = "/overview?from=history";
                               }}
                               className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer"
                               title="Lihat detail"
@@ -358,6 +381,25 @@ export default function HistorisPage() {
                                   strokeLinejoin="round"
                                   strokeWidth={2}
                                   d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleDownloadCSV(row)}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-teal-600 hover:bg-teal-50 hover:border-teal-200 transition-colors cursor-pointer"
+                              title="Download CSV"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                                 />
                               </svg>
                             </button>

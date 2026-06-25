@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const FLASK_API = process.env.PYTHON_API_URL;
 export async function GET(req: NextRequest) {
   try {
     const cookie = req.headers.get("cookie") || "";
@@ -9,7 +8,7 @@ export async function GET(req: NextRequest) {
     const var_ = searchParams.get("var")  ?? "WS10M";
 
     const res = await fetch(
-      `${FLASK_API}/forecast_result?mode=${mode}&var=${var_}`,
+      `http://127.0.0.1:5000/forecast_result?mode=${mode}&var=${var_}`,
       { cache: "no-store", headers: { cookie } }
     );
     const data = await res.json();

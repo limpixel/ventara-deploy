@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PYTHON_API = process.env.PYTHON_API_URL;
-
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -9,7 +7,7 @@ export async function POST(
   const { id } = await params;
   const username = req.nextUrl.searchParams.get("username") || "";
 
-  const res = await fetch(`${PYTHON_API}/snapshots/${id}/restore`, {
+  const res = await fetch(`http://127.0.0.1:5000/snapshots/${id}/restore`, {
     method: "POST",
     cache: "no-store",
     headers: {

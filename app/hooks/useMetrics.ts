@@ -48,7 +48,7 @@ export function useMetrics(selectedVar: string = "WS10M") {
   try {
     const username = sessionStorage.getItem("ventara_username") || "";
     const res = await fetch(
-      `${process.env.PYTHON_API_URL}/forecasting_data?var=${selectedVar}`,
+      `http://localhost:5000/forecasting_data?var=${selectedVar}`,
       {
         credentials: "include",
         headers: { "X-Username": username },

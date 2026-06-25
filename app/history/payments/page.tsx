@@ -100,7 +100,8 @@ export default function PaymentHistoryPage() {
   }
 
   function getWebsite(ref: string): string {
-    return window.location.origin
+    // Try to infer or default to localhost:3000
+    return "localhost:3000"
   }
 
   function copyToClipboard(text: string) {

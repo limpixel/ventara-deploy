@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PYTHON_API } from "../../_config"
+import { promises as fs } from "fs"
+import path from "path"
+
+const DATA_DIR = path.join(process.cwd(), "data", "payments")
 
 function parseReference(ref: string): { username: string; tier: string } | null {
   const parts = ref.split("-")
@@ -7,6 +10,37 @@ function parseReference(ref: string): { username: string; tier: string } | null 
     return { tier: parts[1], username: parts[2] }
   }
   return null
+}
+
+async function savePaymentRecord(record: {
+  username: string
+  transaction_id: string
+  tier: string
+  amount: number
+  payment_type: string
+  reference: string
+}) {
+  const filePath = path.join(DATA_DIR, `${record.username}.json`)
+  let records: any[] = []
+  try {
+    const raw = await fs.readFile(filePath, "utf-8")
+    records = JSON.parse(raw)
+  } catch {}
+
+  if (records.some((r: any) => r.transaction_id === record.transaction_id)) return
+
+  records.push({
+    transaction_id: record.transaction_id,
+    tier: record.tier,
+    amount: record.amount,
+    payment_type: record.payment_type,
+    status: "settled",
+    reference: record.reference,
+    paid_at: new Date().toISOString(),
+  })
+
+  await fs.mkdir(DATA_DIR, { recursive: true })
+  await fs.writeFile(filePath, JSON.stringify(records, null, 2), "utf-8")
 }
 
 export async function POST(req: NextRequest) {
@@ -33,41 +67,25 @@ export async function POST(req: NextRequest) {
       }
 
       if (username) {
-        const res = await fetch(`${PYTHON_API}/payment_history`, {
+        const pythonUrl = process.env.PYTHON_API_URL || "http://localhost:5000"
+        await fetch(`${pythonUrl}/upgrade_tier`, {
           method: "POST",
-          cache: "no-store",
           headers: {
             "Content-Type": "application/json",
             "X-Username": username,
           },
-          body: JSON.stringify({
-            transaction_id: data.transaction_id,
-            tier,
-            amount: data.net_amount || data.amount || 0,
-            payment_type: data.payment_type || "qris",
-            reference: data.order_id || "",
-            paid_at: data.settled_at || new Date().toISOString(),
-          }),
+          body: JSON.stringify({ tier }),
         })
-        console.log(`Webhook: payment saved for ${username} -> ${tier} (${data.transaction_id})`)
+        console.log(`Upgrade success: ${username} -> ${tier}`)
 
-        try {
-          const upgrade = await fetch(`${PYTHON_API}/upgrade_tier`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Username": username,
-            },
-            body: JSON.stringify({ tier }),
-          })
-          if (upgrade.ok) {
-            console.log(`Webhook: upgrade success ${username} -> ${tier}`)
-          } else {
-            console.error(`Webhook: upgrade failed (${upgrade.status})`)
-          }
-        } catch (err) {
-          console.error(`Webhook: upgrade error: ${err}`)
-        }
+        await savePaymentRecord({
+          username,
+          transaction_id: data.transaction_id,
+          tier,
+          amount: data.net_amount || data.amount || 0,
+          payment_type: data.payment_type || "qris",
+          reference: data.order_id || "",
+        })
       }
     }
 
