@@ -3,7 +3,7 @@ import { promises as fs } from "fs"
 import path from "path"
 import { PYTHON_API } from "../../_config"
 
-const DATA_DIR = path.join(process.cwd(), "data", "payments")
+const DATA_DIR = process.env.VERCEL ? path.join("/tmp", "payments") : path.join(process.cwd(), "data", "payments")
 
 function parseReference(ref: string): { username: string; tier: string } | null {
   const parts = ref.split("-")

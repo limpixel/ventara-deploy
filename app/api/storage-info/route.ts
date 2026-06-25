@@ -3,7 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { PYTHON_API } from "../_config";
 
-const PAYMENTS_DIR = path.join(process.cwd(), "data", "payments");
+const PAYMENTS_DIR = process.env.VERCEL ? path.join("/tmp", "payments") : path.join(process.cwd(), "data", "payments");
 
 const TIER_ORDER: Record<string, number> = {
   free: 0,

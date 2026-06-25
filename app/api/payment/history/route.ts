@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
 
-const DATA_DIR = path.join(process.cwd(), "data", "payments")
+const DATA_DIR = process.env.VERCEL ? path.join("/tmp", "payments") : path.join(process.cwd(), "data", "payments")
 
 function userFile(username: string): string {
   return path.join(DATA_DIR, `${username}.json`)
