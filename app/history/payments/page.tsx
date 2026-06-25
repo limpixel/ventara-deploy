@@ -45,9 +45,9 @@ export default function PaymentHistoryPage() {
         return
       }
       try {
-        const res = await fetch("/api/payment/history", {
-          headers: { "X-Username": username },
-        })
+        const res = await fetch(`/api/payment/history?username=${username}`)
+
+
         const json = await res.json()
         if (json.success) {
           setPayments(json.data.reverse())
@@ -102,8 +102,9 @@ export default function PaymentHistoryPage() {
   }
 
   function getWebsite(ref: string): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? window.location.host
-}
+    // Try to infer or default to localhost:3000
+    return "localhost:3000"
+  }
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text)

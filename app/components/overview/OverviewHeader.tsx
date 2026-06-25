@@ -55,8 +55,12 @@ export default function OverviewHeader({
                     headers: { "X-Username": username },
                   });
                   const json = await res.json();
-                  metrics = json.metrics ?? json;
-                  ensemble_components = json.ensemble_components ?? null;
+                  // hanya simpan kalau response valid & ada field metrics,
+                  // jangan sampai envelope error ({error, detail}) ke-simpen sebagai metrics
+                  if (res.ok && json.metrics) {
+                    metrics = json.metrics;
+                    ensemble_components = json.ensemble_components ?? null;
+                  }
                 } catch {}
 
                 const outputFile =
