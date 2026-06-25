@@ -115,7 +115,11 @@ export default function EDASection() {
   const [activeTab, setActiveTab] = useState<Tab>("stats");
 
   useEffect(() => {
-    fetch("/api/eda-summary", { credentials: "include" })
+    fetch("/api/eda-summary", {
+      headers: {
+        "X-Username": sessionStorage.getItem("ventara_username") ?? "",
+      },
+    })
       .then((r) => r.json())
       .then((d) => { if (!d.error) setData(d); })
       .catch(() => {})

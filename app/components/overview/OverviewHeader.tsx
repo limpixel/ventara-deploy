@@ -51,13 +51,9 @@ export default function OverviewHeader({
                 let metrics = null;
                 let ensemble_components = null;
                 try {
-                  const res = await fetch(
-                    "http://localhost:5000/overfit_metrics",
-                    {
-                      credentials: "include",
-                      headers: { "X-Username": username },
-                    },
-                  );
+                  const res = await fetch("/api/overfit-metrics", {
+                    headers: { "X-Username": username },
+                  });
                   const json = await res.json();
                   metrics = json.metrics ?? json;
                   ensemble_components = json.ensemble_components ?? null;

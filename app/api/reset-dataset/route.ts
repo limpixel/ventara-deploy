@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PYTHON_API = process.env.PYTHON_API_URL;
 
-export async function DELETE(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const username = req.headers.get("x-username") ?? "";
-  const id = req.nextUrl.searchParams.get("id") || "";
 
-  const res = await fetch(`${PYTHON_API}/delete_history?id=${id}`, {
-    method: "DELETE",
+  const res = await fetch(`${PYTHON_API}/reset_dataset`, {
+    method: "POST",
     headers: {
       "X-Username": username,
     },

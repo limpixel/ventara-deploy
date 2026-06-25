@@ -88,7 +88,9 @@ export default function HistorisPage() {
       try {
         const username = sessionStorage.getItem("ventara_username") || "";
         const [res] = await Promise.all([
-          fetch(`/api/get-history?username=${username}`),
+          fetch("/api/get-history", {
+            headers: { "X-Username": username },
+          }),
           refreshStorage(),
         ]);
         const json = await res.json();
@@ -114,9 +116,10 @@ export default function HistorisPage() {
     const username = sessionStorage.getItem("ventara_username") || "";
     setDeletingId(id);
     try {
-      await fetch(`/api/delete-history?username=${username}&id=${id}`, {
-        method: "DELETE",
-      });
+      await fetch(`/api/delete-history?id=${id}`, {
+      method: "DELETE",
+      headers: { "X-Username": username },
+    });
       setData((prev) => prev.filter((d) => d.id !== id));
       await refreshStorage(); // ← tambah
     } catch (error) {
@@ -134,7 +137,10 @@ export default function HistorisPage() {
     console.log("row.output_file:", row.output_file);
     console.log("fileToDownload:", fileToDownload);
     const res = await fetch(
-      `/api/download-history-csv?username=${username}&file=${encodeURIComponent(fileToDownload)}`,
+      `/api/download-history-csv?file=${encodeURIComponent(fileToDownload)}`,
+      {
+        headers: { "X-Username": username },
+      },
     );
     if (!res.ok) {
       alert("File tidak tersedia");

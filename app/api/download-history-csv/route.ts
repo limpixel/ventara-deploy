@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PYTHON_API = process.env.PYTHON_API_URL
+const PYTHON_API = process.env.PYTHON_API_URL;
 
 export async function GET(req: NextRequest) {
-  const username = req.nextUrl.searchParams.get("username") || "";
+  const username = req.headers.get("x-username") ?? "";
   const file = req.nextUrl.searchParams.get("file") || "";
 
   const res = await fetch(
-    `${process.env.PYTHON_API_URL}/download_history_csv?file=${encodeURIComponent(file)}`,
+    `${PYTHON_API}/download_history_csv?file=${encodeURIComponent(file)}`,
     {
       headers: { "X-Username": username },
     }

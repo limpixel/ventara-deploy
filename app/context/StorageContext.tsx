@@ -47,9 +47,9 @@ export function StorageProvider({
         console.log("refreshStorage username:", username); // ← tambah
     if (!username) return; // ← tambah, biar ga fetch kalau kosong
 
-      const res = await fetch(
-        `/api/storage-info?username=${username}`
-      );
+      const res = await fetch("/api/storage-info", {
+        headers: { "X-Username": username },
+      });
 
       const json = await res.json();
 

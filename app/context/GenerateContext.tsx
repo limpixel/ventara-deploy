@@ -142,6 +142,9 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
           if (didStartManually.current) return;
           if (pollGeneration.current > 0) return; // ← tambah: kalau startGenerate sudah jalan duluan
 
+          pollGeneration.current += 1; // ← increment juga di sini
+          const myGen = pollGeneration.current; // ← ambil generation
+
           pollActive.current = true;
           const isBest = prog.mode === "best";
           const currentVar = prog.current_var || "";
@@ -156,7 +159,7 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
             eta: prog.eta,
             elapsed: prog.elapsed,
           });
-          pollOnce(); // resume tanpa onDone — refresh = gak ada callback
+          pollOnce(undefined, myGen); // ← kirim generation
         }
       } catch {
         // Gagal fetch → diam, jangan tampilin apa-apa
@@ -171,13 +174,22 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
       onDone?: (nlp: string, ensembleSummary: Record<string, any>) => void,
       selectedVar: string = "WS10M",
     ) => {
-      // FIX: tandai bahwa generate dipanggil manual supaya resume di useEffect
-      // tidak ikut jalan dan menyebabkan dua pollOnce berjalan bersamaan
-      console.log("startGenerate called"); // ← tambah
       didStartManually.current = true;
-      sessionStorage.removeItem("ventara_cancelled"); // ← tambah
-      console.log("selectedVar dikirim:", selectedVar);
+      sessionStorage.removeItem("ventara_cancelled");
+
+      // Stop polling lama dulu
+      pollActive.current = false;
+      if (pollTimer.current) {
+        clearTimeout(pollTimer.current);
+        pollTimer.current = null;
+      }
+
+      // ← INCREMENT generation setiap startGenerate dipanggil
+      pollGeneration.current += 1;
+      const myGen = pollGeneration.current;
+
       setGenerate({ ...DEFAULT, visible: true });
+
       try {
         const formData = new FormData();
         formData.append("model", selectedModel);
@@ -197,7 +209,7 @@ export function GenerateProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         pollActive.current = true;
-        pollOnce(onDone);
+        pollOnce(onDone, myGen); // ← kirim generation ke pollOnce
       } catch (err) {
         setGenerate(DEFAULT);
         console.error("Generate error:", err);

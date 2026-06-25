@@ -55,12 +55,13 @@ export default function UploadState({
   }
 
   async function handleResetDataset() {
-    const res = await fetch("http://localhost:5000/reset_dataset", {
-      method: "POST",
-      credentials: "include",
-    });
-    if (res.ok) window.location.reload();
-  }
+  const username = sessionStorage.getItem("ventara_username") ?? "";
+  const res = await fetch("/api/reset-dataset", {
+    method: "POST",
+    headers: { "X-Username": username },
+  });
+  if (res.ok) window.location.reload();
+}
 
   return (
     <>
