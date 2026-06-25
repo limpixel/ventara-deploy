@@ -130,7 +130,7 @@ function MetricCard({
 }
 
 function MetricGrid({ modelData }: { modelData: ModelMetrics }) {
-  const metrics = Object.keys(modelData.train).filter(
+  const metrics = Object.keys(modelData.train ?? {}).filter(
     (m) => !EXCLUDE_KEYS.has(m),
   );
   return (
@@ -293,8 +293,8 @@ export default function OverfitChart({
 
   // ✅ displayMetrics dinamis dari data aktual (handle WD10M circular metrics)
   const displayMetrics = current
-    ? Object.keys(current.train).filter((m) => !EXCLUDE_KEYS.has(m))
-    : ["MAE", "RMSE", "sMAPE", "R2"];
+  ? Object.keys(current.train).filter((m) => !EXCLUDE_KEYS.has(m))
+  : ["MAE", "RMSE", "sMAPE", "R2"];
 
   // ensemble key untuk mode best
   const ensembleKey = (() => {
