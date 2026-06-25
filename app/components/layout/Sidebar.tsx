@@ -52,24 +52,30 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  async function handleLogout() {
+    async function handleLogout() {
     setProfileOpen(false);
+    stopTraining();
 
-    // Stop toast & cancel training dulu
-    stopTraining(); // langsung hilangkan banner
+    const username = sessionStorage.getItem("ventara_username") || "";
+
     try {
-      await cancelTraining(); // cancel di Flask
+      await cancelTraining();
     } catch (e) {
       console.error("Cancel training on logout failed:", e);
     }
 
-    await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    sessionStorage.clear();
-    router.push("/");
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-Username": username },
+      });
+    } catch (e) {
+      console.error("Logout request failed:", e);
+    } finally {
+      sessionStorage.clear();
+      router.push("/");
+    }
   }
 
   const linkClass = (href: string) =>
