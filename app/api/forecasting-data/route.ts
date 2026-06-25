@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const PYTHON_API = process.env.PYTHON_API_URL
+
 export async function GET(req: NextRequest) {
   const username = req.nextUrl.searchParams.get("username") || "";
   const varParam = req.nextUrl.searchParams.get("var") || "WS10M"; // ← tambah
 
-  const res = await fetch(`http://127.0.0.1:5000/forecasting_data?var=${varParam}`, { // ← tambah ?var=
+  const res = await fetch(`${PYTHON_API}/forecasting_data?var=${varParam}`, { // ← tambah ?var=
     cache: "no-store",
     headers: {
       "X-Username": username,

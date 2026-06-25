@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const PYTHON_API = process.env.PYTHON_API_URL
+
 export async function POST(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
 
   const res = await fetch(
-    "http://localhost:5000/cancel_training",
+    `${PYTHON_API}/cancel_training`,
     {
       method: "POST",
       headers: {

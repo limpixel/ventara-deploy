@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const FLASK_API = "http://localhost:5000";
+
+const FLASK_API = process.env.PYTHON_API_URL || "http://localhost:5000";
 
 export async function GET(req: NextRequest) {
   try {

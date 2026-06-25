@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const PYTHON_API = process.env.PYTHON_API_URL
+
 export async function GET(req: NextRequest) {
   const username = req.nextUrl.searchParams.get("username") || "";
   const file = req.nextUrl.searchParams.get("file") || "";

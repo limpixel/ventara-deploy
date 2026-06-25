@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const PYTHON_API = process.env.PYTHON_API_URL
+
 export async function GET(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
   const username = req.nextUrl.searchParams.get("username") || "";
 
   const res = await fetch(
-    `http://localhost:5000/train_progress?username=${username}`,
+    `${PYTHON_API}/train_progress?username=${username}`,
     {
       method: "GET",
       headers: { Cookie: cookie },
