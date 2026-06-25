@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { QRCodeCanvas } from "qrcode.react"
-import { PYTHON_API_URL } from "@/app/lib/api"
 
 const TIER_AMOUNT: Record<string, number> = {
   basic: 2000,
@@ -108,10 +107,9 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
           clearInterval(interval)
 
           const username = sessionStorage.getItem("ventara_username") || ""
-          const upgradeRes = await fetch(`${PYTHON_API_URL}/upgrade_tier`, {
+          const upgradeRes = await fetch("/api/upgrade-tier", {
             method: "POST",
             headers: { "Content-Type": "application/json", "X-Username": username },
-            credentials: "include",
             body: JSON.stringify({ tier }),
           })
 

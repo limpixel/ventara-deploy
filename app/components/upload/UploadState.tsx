@@ -85,11 +85,12 @@ export default function UploadState({
         <UpgradeModal
           storageInfo={storageInfo}
           onClose={closeUpgradeModal}
-          onSuccess={() =>
+          onSuccess={async () => {
+            await refreshStorage();
             retryAfterUpgrade(() =>
               train.startTrainToast(() => { onTrainingComplete?.(); })
             )
-          }
+          }}
         />
       )}
 
