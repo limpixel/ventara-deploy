@@ -117,9 +117,9 @@ export default function HistorisPage() {
     setDeletingId(id);
     try {
       await fetch(`/api/delete-history?id=${id}`, {
-      method: "DELETE",
-      headers: { "X-Username": username },
-    });
+        method: "DELETE",
+        headers: { "X-Username": username },
+      });
       setData((prev) => prev.filter((d) => d.id !== id));
       await refreshStorage(); // ← tambah
     } catch (error) {
@@ -137,11 +137,11 @@ export default function HistorisPage() {
     console.log("row.output_file:", row.output_file);
     console.log("fileToDownload:", fileToDownload);
     const res = await fetch(
-    `/api/download-history-csv?file=${encodeURIComponent(fileToDownload)}`,
-    {
-      headers: { "X-Username": username },
-    },
-  );
+      `/api/download-history-csv?file=${encodeURIComponent(fileToDownload)}`,
+      {
+        headers: { "X-Username": username },
+      },
+    );
     if (!res.ok) {
       alert("File tidak tersedia");
       return;
@@ -352,14 +352,32 @@ export default function HistorisPage() {
                                   `ventara_generate_mode_${username}`,
                                   historyMode,
                                 );
+                                // guard: jangan cache kalau bentuknya error envelope ({error, detail})
+                                // atau kalau row statusnya Error (metrics gak reliable)
+                                const isValidMetrics = (
+                                  m: unknown,
+                                ): m is Record<string, unknown> =>
+                                  !!m &&
+                                  typeof m === "object" &&
+                                  !("error" in m) &&
+                                  !("detail" in m);
+
+                                const safeMetrics =
+                                  row.status === "Error" ||
+                                  !isValidMetrics(row.metrics)
+                                    ? null
+                                    : row.metrics;
+
                                 sessionStorage.setItem(
                                   `ventara_overfit_metrics_${username}`,
-                                  JSON.stringify(row.metrics ?? null),
+                                  JSON.stringify(safeMetrics),
                                 );
                                 sessionStorage.setItem(
                                   `ventara_ensemble_components_${username}`,
                                   JSON.stringify(
-                                    row.ensemble_components ?? null,
+                                    row.status === "Error"
+                                      ? null
+                                      : (row.ensemble_components ?? null),
                                   ),
                                 );
                                 sessionStorage.removeItem(

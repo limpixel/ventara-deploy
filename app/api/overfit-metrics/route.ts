@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const PYTHON_API = process.env.PYTHON_API_URL;
 
 export async function GET(req: NextRequest) {
-  const username = req.nextUrl.searchParams.get("username") || "";
+  const username = req.headers.get("X-Username") || "";
 
   const res = await fetch(`${PYTHON_API}/overfit_metrics`, {
     cache: "no-store",

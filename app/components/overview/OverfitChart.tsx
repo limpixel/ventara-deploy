@@ -302,6 +302,7 @@ export default function OverfitChart({
 
   // ensemble key untuk mode best
   const ensembleKey = (() => {
+    if (!ensembleComponents) return null; // ← tambah ini
     const components = ensembleComponents[selectedVar];
     if (!components || components.length < 2) return null;
     const key = components.join("+");
