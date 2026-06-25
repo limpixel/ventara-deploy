@@ -47,10 +47,10 @@ export function useMetrics(selectedVar: string = "WS10M") {
   const fetchData = useCallback(async (retries = 3, delayMs = 2000) => {
   try {
     const username = sessionStorage.getItem("ventara_username") || "";
+    // ✅ Sesudah — lewat Next.js API route
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_PYTHON_API_URL}/forecasting_data?var=${selectedVar}`,
+      `/api/forecasting-data?var=${selectedVar}`,
       {
-        credentials: "include",
         headers: { "X-Username": username },
       }
     );

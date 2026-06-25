@@ -91,10 +91,11 @@ export default function ForecastChart({
       setLoading(true);
       setError(null);
       try {
+        const username = sessionStorage.getItem("ventara_username") || "";
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_PYTHON_API_URL}/forecast_result?mode=${mode}&var=${localVar}`,
+          `/api/forecast-result?mode=${mode}&var=${localVar}`,
           {
-            credentials: "include",
+            headers: { "X-Username": username },
           },
         );
         const json = await res.json();

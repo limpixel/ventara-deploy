@@ -243,7 +243,9 @@ export default function OverfitChart({
 
     
 
-    fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/overfit_metrics`, { credentials: "include" })
+    fetch(`/api/overfit-metrics`, {
+      headers: { "X-Username": sessionStorage.getItem("ventara_username") || "" }
+    })
       .then((r) => r.json())
       .then((json) => {
         if (json.error) {
