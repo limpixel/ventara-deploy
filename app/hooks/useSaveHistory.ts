@@ -50,7 +50,6 @@ export function useSaveHistory() {
           "Content-Type": "application/json",
           "X-Username": username || "",
         },
-        credentials: "include",
         body: JSON.stringify({ entry: newItem }),
       });
 
