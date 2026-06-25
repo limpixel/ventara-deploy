@@ -4,13 +4,14 @@ import { PYTHON_API } from "../_config";
 export async function GET(req: NextRequest) {
   try {
     const cookie = req.headers.get("cookie") || "";
+    const xUsername = req.headers.get("x-username") || "";
     const { searchParams } = new URL(req.url);
     const mode = searchParams.get("mode") ?? "general";
     const var_ = searchParams.get("var")  ?? "WS10M";
 
     const res = await fetch(
       `${PYTHON_API}/forecast_result?mode=${mode}&var=${var_}`,
-      { cache: "no-store", headers: { cookie } }
+      { cache: "no-store", headers: { cookie, "X-Username": xUsername } }
     );
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

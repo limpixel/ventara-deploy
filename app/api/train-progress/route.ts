@@ -3,13 +3,13 @@ import { PYTHON_API } from "../_config";
 
 export async function GET(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
-  const username = req.nextUrl.searchParams.get("username") || "";
+  const xUsername = req.headers.get("x-username") || "";
 
   const res = await fetch(
-    `${PYTHON_API}/train_progress?username=${username}`,
+    `${PYTHON_API}/train_progress`,
     {
       method: "GET",
-      headers: { Cookie: cookie },
+      headers: { Cookie: cookie, "X-Username": xUsername },
       cache: "no-store",
     }
   );

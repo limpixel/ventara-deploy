@@ -4,10 +4,11 @@ import { PYTHON_API } from "../_config";
 export async function GET(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get("mode") || "general";
   const cookie = req.headers.get("cookie") || "";
+  const xUsername = req.headers.get("x-username") || "";
 
   const res = await fetch(`${PYTHON_API}/download_forecast?mode=${mode}`, {
     cache: "no-store",
-    headers: { cookie },
+    headers: { cookie, "X-Username": xUsername },
   });
 
   if (!res.ok) {
