@@ -1,3 +1,4 @@
+// payments/PaymentsCard.tsx
 "use client";
 
 interface PaymentCardProps {

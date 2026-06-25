@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { QRCodeCanvas } from "qrcode.react"
-import { PYTHON_API_URL } from "@/app/lib/api"
 
 const TIER_AMOUNT: Record<string, number> = {
   basic: 2000,
@@ -11,8 +10,7 @@ const TIER_AMOUNT: Record<string, number> = {
 
 const TIER_LABEL: Record<string, string> = {
   basic: "Basic (550 MB + 3 Cache)",
-  
-  business: "Business (2048 MB + 5 cache)",
+  business: "Business (2048 MB + 5 Cache)",
 }
 
 const PAYMENT_LABEL: Record<string, string> = {
@@ -37,7 +35,7 @@ interface PaymentModalProps {
   onSuccess: () => void
 }
 
-type PaymentStatus = "idle" | "loading" | "ready" | "paid" | "expired" | "error"
+type PaymentStatus = "idle" | "loading" | "ready" | "upgrading" | "paid" | "expired" | "error"
 
 export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalProps) {
   const [status, setStatus] = useState<PaymentStatus>("idle")
@@ -55,10 +53,64 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
   const amount = TIER_AMOUNT[tier]
   const tierLabel = TIER_LABEL[tier]
 
-  const refreshStorage = useCallback(async () => {
+  const handleUpgradeAndSave = useCallback(async (txId: string) => {
     const username = sessionStorage.getItem("ventara_username") || ""
-    onSuccess()
-  }, [onSuccess])
+    setStatus("upgrading")
+
+    // 1. Upgrade tier via proxy (server-side, bukan langsung ke Python)
+    const upgradeRes = await fetch("/api/payment/upgrade-tier", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, tier }),
+    })
+
+    if (!upgradeRes.ok) {
+      const err = await upgradeRes.json().catch(() => ({}))
+      console.error("[PaymentModal] Upgrade tier gagal:", err)
+      setStatus("error")
+      setErrorMsg("Pembayaran berhasil tapi upgrade tier gagal. Hubungi support.")
+      return
+    }
+
+    // 2. Simpan payment history
+    await fetch("/api/payment/history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username,
+        transaction_id: txId,
+        tier,
+        amount,
+        payment_type: paymentType,
+        reference: `ventara-${tier}-${username}-${Date.now()}`,
+      }),
+    }).catch((err) => console.warn("[PaymentModal] Gagal simpan history:", err))
+
+    // 3. Tandai sukses
+    setStatus("paid")
+    setTimeout(() => onSuccess(), 1500)
+  }, [tier, amount, paymentType, onSuccess])
+
+  // Polling status transaksi
+  useEffect(() => {
+    if (status !== "ready" || !transactionId) return
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/payment/check-status?id=${transactionId}`)
+        const json = await res.json()
+
+        if (json.success && json.transaction?.status === "settled") {
+          clearInterval(interval)
+          await handleUpgradeAndSave(transactionId)
+        }
+      } catch (err) {
+        console.warn("[PaymentModal] Polling error (akan retry):", err)
+      }
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [status, transactionId, handleUpgradeAndSave])
 
   const createTransaction = useCallback(async (payment_type: string) => {
     setStatus("loading")
@@ -69,12 +121,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
       const res = await fetch("/api/payment/create-transaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount,
-          payment_type,
-          customer_name: username,
-          tier,
-        }),
+        body: JSON.stringify({ amount, payment_type, customer_name: username, tier }),
       })
       const json = await res.json()
 
@@ -97,56 +144,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
     }
   }, [amount, tier])
 
-  useEffect(() => {
-    if (status !== "ready") return
-
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/payment/check-status?id=${transactionId}`)
-        const json = await res.json()
-        if (json.success && json.transaction?.status === "settled") {
-          clearInterval(interval)
-
-          const username = sessionStorage.getItem("ventara_username") || ""
-          const upgradeRes = await fetch(`${PYTHON_API_URL}/upgrade_tier`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Username": username },
-            credentials: "include",
-            body: JSON.stringify({ tier }),
-          })
-
-          if (!upgradeRes.ok) {
-            console.error("Upgrade failed:", await upgradeRes.text())
-            return
-          }
-
-          setStatus("paid")
-
-          await fetch("/api/payment/history", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              username,
-              transaction_id: transactionId,
-              tier,
-              amount,
-              payment_type: paymentType,
-              reference: `ventara-${tier}-${username}`,
-            }),
-          })
-
-          setTimeout(() => {
-            refreshStorage()
-          }, 1500)
-        }
-      } catch {
-        // silent retry
-      }
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [status, transactionId, tier, refreshStorage])
-
+  // Countdown timer
   useEffect(() => {
     if (!expiredAt) return
 
@@ -177,22 +175,19 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
 
         {status === "idle" && (
           <>
-            <div className="mb-1">
-              <p className="text-2xl font-bold text-gray-900 mb-1">
-                Rp {amount.toLocaleString("id-ID")}
-              </p>
-            </div>
-
+            <p className="text-2xl font-bold text-gray-900 mb-4">
+              Rp {amount.toLocaleString("id-ID")}
+            </p>
             <div className="text-left mb-4">
               <p className="text-sm font-medium text-gray-700 mb-3">Pilih Metode Pembayaran</p>
               <div className="space-y-2">
                 {[
-                  { value: "qris", label: "QRIS", desc: "Scan QR via GoPay / ShopeePay / LinkAja / QRIS" },
-                  { value: "gopay", label: "GoPay", desc: "Bayar langsung via aplikasi GoPay" },
-                  { value: "bni_va", label: "BNI Virtual Account", desc: "Transfer ke nomor VA BNI" },
-                  { value: "bri_va", label: "BRI Virtual Account", desc: "Transfer ke nomor VA BRI" },
-                  { value: "permata_va", label: "Permata Virtual Account", desc: "Transfer ke nomor VA Permata" },
-                  { value: "cimb_niaga_va", label: "CIMB Niaga Virtual Account", desc: "Transfer ke nomor VA CIMB" },
+                  { value: "qris",           label: "QRIS",                     desc: "Scan QR via GoPay / ShopeePay / LinkAja" },
+                  { value: "gopay",          label: "GoPay",                    desc: "Bayar langsung via aplikasi GoPay" },
+                  { value: "bni_va",         label: "BNI Virtual Account",      desc: "Transfer ke nomor VA BNI" },
+                  { value: "bri_va",         label: "BRI Virtual Account",      desc: "Transfer ke nomor VA BRI" },
+                  { value: "permata_va",     label: "Permata Virtual Account",  desc: "Transfer ke nomor VA Permata" },
+                  { value: "cimb_niaga_va",  label: "CIMB Niaga Virtual Account", desc: "Transfer ke nomor VA CIMB" },
                 ].map((m) => (
                   <label
                     key={m.value}
@@ -208,7 +203,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
                       value={m.value}
                       checked={selectedMethod === m.value}
                       onChange={() => setSelectedMethod(m.value)}
-                      className="w-4 h-4 text-teal-600 accent-teal-600 shrink-0"
+                      className="w-4 h-4 accent-teal-600 shrink-0"
                     />
                     <div>
                       <p className="text-sm font-medium text-gray-800">{m.label}</p>
@@ -218,7 +213,6 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
                 ))}
               </div>
             </div>
-
             <button
               onClick={() => createTransaction(selectedMethod)}
               className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition"
@@ -228,10 +222,12 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
           </>
         )}
 
-        {status === "loading" && (
+        {(status === "loading" || status === "upgrading") && (
           <div className="py-10">
             <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-3" />
-            <p className="text-sm text-gray-500">Menyiapkan pembayaran...</p>
+            <p className="text-sm text-gray-500">
+              {status === "upgrading" ? "Mengaktifkan paket..." : "Menyiapkan pembayaran..."}
+            </p>
           </div>
         )}
 
@@ -247,9 +243,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
                   Nomor Virtual Account
                 </p>
                 <p className="text-lg font-bold text-gray-900 tracking-wider font-mono">{vaNumber}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Bank: {BANK_LABEL[bankName] || bankName}
-                </p>
+                <p className="text-xs text-gray-400 mt-1">Bank: {BANK_LABEL[bankName] || bankName}</p>
               </div>
             ) : null}
 
@@ -260,9 +254,6 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 px-5 py-2.5 rounded-xl mb-3 transition"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
                 Buka {PAYMENT_LABEL[paymentType] || paymentType.toUpperCase()}
               </a>
             )}
@@ -277,9 +268,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
                   ? "Klik tombol untuk membuka aplikasi pembayaran"
                   : "Scan QR di atas dengan GoPay / ShopeePay / LinkAja / QRIS"}
             </p>
-            <p className="text-sm text-amber-600 font-medium">
-              ⏱ {countdown}
-            </p>
+            <p className="text-sm text-amber-600 font-medium">⏱ {countdown}</p>
           </>
         )}
 
@@ -289,7 +278,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
               <span className="text-3xl">✓</span>
             </div>
             <p className="text-lg font-semibold text-green-700">Pembayaran Berhasil!</p>
-            <p className="text-sm text-gray-500 mt-1">Storage sedang diupgrade...</p>
+            <p className="text-sm text-gray-500 mt-1">Paket sedang diaktifkan...</p>
           </div>
         )}
 
@@ -313,7 +302,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
             <p className="text-lg font-semibold text-red-600 mb-1">Gagal</p>
             <p className="text-sm text-gray-500 mb-4">{errorMsg}</p>
             <button
-              onClick={() => createTransaction(paymentType)}
+              onClick={() => setStatus("idle")}
               className="w-full py-3 bg-teal-500 text-white font-medium rounded-xl hover:bg-teal-600 transition"
             >
               Coba Lagi
@@ -321,7 +310,7 @@ export default function PaymentModal({ tier, onClose, onSuccess }: PaymentModalP
           </div>
         )}
 
-        {status !== "paid" && (
+        {status !== "paid" && status !== "upgrading" && (
           <button
             onClick={onClose}
             className="mt-4 text-sm text-gray-400 hover:text-gray-600 transition"
