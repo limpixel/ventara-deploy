@@ -102,9 +102,8 @@ export default function PaymentHistoryPage() {
   }
 
   function getWebsite(ref: string): string {
-    // Try to infer or default to localhost:3000
-    return "localhost:3000"
-  }
+  return "ventara-deploy.vercel.app"
+}
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text)
