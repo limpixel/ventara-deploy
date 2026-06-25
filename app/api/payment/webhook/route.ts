@@ -68,16 +68,6 @@ export async function POST(req: NextRequest) {
       }
 
       if (username) {
-        await fetch(`${PYTHON_API}/upgrade_tier`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Username": username,
-          },
-          body: JSON.stringify({ tier }),
-        })
-        console.log(`Upgrade success: ${username} -> ${tier}`)
-
         await savePaymentRecord({
           username,
           transaction_id: data.transaction_id,
@@ -86,6 +76,25 @@ export async function POST(req: NextRequest) {
           payment_type: data.payment_type || "qris",
           reference: data.order_id || "",
         })
+        console.log(`Payment saved: ${username} -> ${tier} (${data.transaction_id})`)
+
+        try {
+          const res = await fetch(`${PYTHON_API}/upgrade_tier`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Username": username,
+            },
+            body: JSON.stringify({ tier }),
+          })
+          if (res.ok) {
+            console.log(`Upgrade success: ${username} -> ${tier}`)
+          } else {
+            console.error(`Upgrade failed (${res.status}): ${await res.text()}`)
+          }
+        } catch (err) {
+          console.error(`Upgrade error: ${err}`)
+        }
       }
     }
 
