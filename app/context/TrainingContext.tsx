@@ -37,23 +37,22 @@ const DEFAULT_STATE: TrainingState = {
   footer: "",
 };
 
-const TRAIN_STEPS = [
-  "Load dataset",
-  "Training GBR",
-  "Training XGBoost",
-  "Training KNN",
-  "Training LSTM",
-  "Training BiLSTM",
-  "Update globals",
-  "Selesai",
-];
-
 function calcProgress(step: string, done: boolean): number {
   if (done) return 100;
-  const idx = TRAIN_STEPS.findIndex((s) =>
-    step.toLowerCase().includes(s.toLowerCase()),
-  );
-  return idx >= 0 ? Math.round(((idx + 1) / TRAIN_STEPS.length) * 100) : 10;
+  if (!step) return 5;
+
+  const s = step.toLowerCase();
+
+  if (s.includes("load dataset"))        return 10;
+  if (s.includes("feature engineering")) return 25;
+  if (s.includes("training ml"))         return 40;
+  if (s.includes("ml") && s.includes("selesai")) return 55;
+  if (s.includes("training dl"))         return 65;
+  if (s.includes("dl") && s.includes("selesai")) return 80;
+  if (s.includes("update globals"))      return 90;
+  if (s.includes("selesai"))             return 100;
+
+  return 15;
 }
 
 const TrainingContext = createContext<TrainingContextValue | null>(null);
@@ -87,6 +86,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         }
         try {
           const data = await fetchTrainProgress();
+
+          // Training belum mulai di server — jangan reset, tunggu dulu
+          if (!data.running && !data.done && !data.step) {
+            return;
+          }
 
           const next: TrainingState = {
             isTraining: true,
@@ -177,7 +181,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [poll]);
 
   const cancelTraining = useCallback(async () => {
-    // Stop polling dulu biar tidak override state
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -189,7 +192,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.error("Cancel failed:", e);
     } finally {
-      // Reset state apapun yang terjadi
       setTraining(DEFAULT_STATE);
     }
   }, []);
