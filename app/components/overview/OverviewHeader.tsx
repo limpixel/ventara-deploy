@@ -65,7 +65,7 @@ export default function OverviewHeader({
                     : `${username}_hasil_prediksi_general.csv`;
 
 
-                saveHistory({
+               await saveHistory({
                   file: datasetName || outputFile,
                   output_file: outputFile,
                   algo: generateMode === "best" ? "Best" : "General Model",

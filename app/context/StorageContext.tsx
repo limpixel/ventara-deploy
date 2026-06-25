@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   ReactNode,
+  useCallback,
 } from "react";
 
 interface StorageInfo {
@@ -13,7 +14,7 @@ interface StorageInfo {
   usage_mb: number;
   limit_mb: number;
   percent: number;
-  hash_count: number;        // ← tambah
+  hash_count: number; // ← tambah
   snapshot_limit: number;
 }
 
@@ -24,28 +25,21 @@ interface StorageContextType {
 
 const StorageContext = createContext<StorageContextType | null>(null);
 
-export function StorageProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function StorageProvider({ children }: { children: ReactNode }) {
+  const [storageInfo, setStorageInfo] = useState<StorageInfo>({
+    tier: "free",
+    usage_mb: 0,
+    limit_mb: 125,
+    percent: 0,
+    hash_count: 0, // ← tambah
+    snapshot_limit: 2,
+  });
 
-  const [storageInfo, setStorageInfo] =
-    useState<StorageInfo>({
-      tier: "free",
-      usage_mb: 0,
-      limit_mb: 125,
-      percent: 0,
-      hash_count: 0,             // ← tambah
-      snapshot_limit: 2,
-    });
-
-  const refreshStorage = async () => {
+  const refreshStorage = useCallback(async () => {
     try {
-      const username =
-        sessionStorage.getItem("ventara_username") || "";
-        console.log("refreshStorage username:", username); // ← tambah
-    if (!username) return; // ← tambah, biar ga fetch kalau kosong
+      const username = sessionStorage.getItem("ventara_username") || "";
+      console.log("refreshStorage username:", username); // ← tambah
+      if (!username) return; // ← tambah, biar ga fetch kalau kosong
 
       const res = await fetch("/api/storage-info", {
         headers: { "X-Username": username },
@@ -53,20 +47,20 @@ export function StorageProvider({
 
       const json = await res.json();
 
-      if (json.success) {
+      if (json.success && json.tier !== undefined) {
         setStorageInfo(json);
       }
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
   useEffect(() => {
-  const username = sessionStorage.getItem("ventara_username");
-  if (username) {  // ← hanya fetch kalau sudah login
-    refreshStorage();
-  }
-}, []);
+    const username = sessionStorage.getItem("ventara_username");
+    if (username) {
+      refreshStorage();
+    }
+  }, [refreshStorage]);
 
   return (
     <StorageContext.Provider
@@ -84,9 +78,7 @@ export function useStorage() {
   const ctx = useContext(StorageContext);
 
   if (!ctx) {
-    throw new Error(
-      "useStorage must be used inside StorageProvider"
-    );
+    throw new Error("useStorage must be used inside StorageProvider");
   }
 
   return ctx;

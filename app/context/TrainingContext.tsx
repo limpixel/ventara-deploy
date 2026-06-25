@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import {
   fetchTrainProgress,
   clearTrainProgress,
@@ -44,7 +51,7 @@ const TRAIN_STEPS = [
 function calcProgress(step: string, done: boolean): number {
   if (done) return 100;
   const idx = TRAIN_STEPS.findIndex((s) =>
-    step.toLowerCase().includes(s.toLowerCase())
+    step.toLowerCase().includes(s.toLowerCase()),
   );
   return idx >= 0 ? Math.round(((idx + 1) / TRAIN_STEPS.length) * 100) : 10;
 }
@@ -54,93 +61,105 @@ const TrainingContext = createContext<TrainingContextValue | null>(null);
 export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [training, setTraining] = useState<TrainingState>(DEFAULT_STATE);
 
-
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollGeneration = useRef(0);
 
   const stopTraining = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
-
     setTraining(DEFAULT_STATE);
   }, []);
 
-  const poll = useCallback((onComplete?: () => void) => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+  const poll = useCallback(
+    (onComplete?: () => void) => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
 
-    intervalRef.current = setInterval(async () => {
-      try {
-        const username = sessionStorage.getItem("ventara_username");
-      if (!username) { 
-        stopTraining();
-        return;
-      }
-        const data = await fetchTrainProgress();
+      pollGeneration.current += 1;
+      const myGen = pollGeneration.current;
 
-        const next: TrainingState = {
-          isTraining: true,
-          step: data.step || "Berjalan...",
-          progress: calcProgress(data.step ?? "", data.done),
-          logs: data.log?.length ? data.log : [],
-          footer: "Jangan tutup halaman ini",
-        };
-
-        if (data.done && !data.running) {
+      intervalRef.current = setInterval(async () => {
+        if (myGen !== pollGeneration.current) {
           clearInterval(intervalRef.current!);
+          intervalRef.current = null;
+          return;
+        }
+        try {
+          const data = await fetchTrainProgress();
 
-          if (data.cancelled) {
-            await clearTrainProgress();
-            stopTraining();
+          const next: TrainingState = {
+            isTraining: true,
+            step: data.step || "Berjalan...",
+            progress: calcProgress(data.step ?? "", data.done),
+            logs: data.log?.length ? data.log : [],
+            footer: "Jangan tutup halaman ini",
+          };
+
+          if (data.done && !data.running) {
+            clearInterval(intervalRef.current!);
+            intervalRef.current = null;
+
+            if (data.cancelled) {
+              await clearTrainProgress();
+              stopTraining();
+              return;
+            }
+
+            if (data.error) {
+              stopTraining();
+            } else {
+              const doneState: TrainingState = {
+                ...next,
+                progress: 100,
+                footer: "✅ Training selesai!",
+              };
+              setTraining(doneState);
+
+              setTimeout(async () => {
+                try {
+                  await clearTrainProgress();
+                } catch {}
+                stopTraining();
+                onComplete?.();
+                window.dispatchEvent(new Event("training-complete"));
+              }, 2000);
+            }
             return;
           }
 
-          if (data.error) {
-            stopTraining();
-          } else {
-            const doneState: TrainingState = {
-              ...next,
-              progress: 100,
-              footer: "✅ Training selesai!",
-            };
-            setTraining(doneState);
-
-            setTimeout(async () => {
-              try { await clearTrainProgress(); } catch {}
-              stopTraining();
-              onComplete?.();
-              window.dispatchEvent(new Event("training-complete"));
-            }, 2000);
-          }
-          return;
+          setTraining(next);
+        } catch (e) {
+          console.log("Train polling skip:", e);
         }
+      }, 2000);
+    },
+    [stopTraining],
+  );
 
-        setTraining(next);
-      } catch (e) {
-        console.log("Train polling skip:", e);
-      }
-    }, 2000);
-  }, [stopTraining]);
-
-  const startTraining = useCallback((onComplete?: () => void) => {
-    const initial: TrainingState = {
-      isTraining: true,
-      step: "Memulai...",
-      progress: 0,
-      logs: [],
-      footer: "Jangan tutup halaman ini",
-    };
-    setTraining(initial);
-    poll(onComplete);
-  }, [poll]);
+  const startTraining = useCallback(
+    (onComplete?: () => void) => {
+      const initial: TrainingState = {
+        isTraining: true,
+        step: "Memulai...",
+        progress: 0,
+        logs: [],
+        footer: "Jangan tutup halaman ini",
+      };
+      setTraining(initial);
+      poll(onComplete);
+    },
+    [poll],
+  );
 
   useEffect(() => {
     const init = async () => {
       try {
         const data = await fetchTrainProgress();
 
-        if (data.running) {
+        if (data.running && !intervalRef.current) {
           poll(() => {
-            window.dispatchEvent(new Event("training-complete"));  // tetap reload kalau resume dari tab lain
+            window.dispatchEvent(new Event("training-complete"));
           });
         }
       } catch (err) {
@@ -156,34 +175,34 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
     };
   }, [poll]);
-  
-  const cancelTraining = useCallback(async () => {
-  // Stop polling dulu biar tidak override state
-  if (intervalRef.current) {
-    clearInterval(intervalRef.current);
-    intervalRef.current = null;
-  }
 
-  try {
-    await cancelTrainingApi();
-    await clearTrainProgress();
-  } catch (e) {
-    console.error("Cancel failed:", e);
-  } finally {
-    // Reset state apapun yang terjadi
-    setTraining(DEFAULT_STATE);
-  }
-}, []);
+  const cancelTraining = useCallback(async () => {
+    // Stop polling dulu biar tidak override state
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    try {
+      await cancelTrainingApi();
+      await clearTrainProgress();
+    } catch (e) {
+      console.error("Cancel failed:", e);
+    } finally {
+      // Reset state apapun yang terjadi
+      setTraining(DEFAULT_STATE);
+    }
+  }, []);
 
   return (
     <TrainingContext.Provider
-        value={{
-          training,
-          startTraining,
-          stopTraining,
-          cancelTraining
-        }}
-      >
+      value={{
+        training,
+        startTraining,
+        stopTraining,
+        cancelTraining,
+      }}
+    >
       {children}
     </TrainingContext.Provider>
   );
