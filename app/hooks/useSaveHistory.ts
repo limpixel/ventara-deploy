@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 
 interface SaveHistoryPayload {
   file: string;
-  output_file: string;
+  output_file?: string
   algo: string;
   periode: string;
   nlp_report: string;

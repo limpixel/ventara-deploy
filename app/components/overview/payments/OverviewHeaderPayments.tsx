@@ -39,7 +39,8 @@ export default function OverviewHeader({
                 algo: generateMode === "best" ? "Best Model" : "General Model",
                 periode: "168 Jam",
                 nlp_report: nlpReport,
-                onStorageFull: () => setShowUpgradeModal(true),  // ← tambah
+                output_file: "",  // ← tambah ini
+                onStorageFull: () => setShowUpgradeModal(true),
               })
             }
             className="bg-teal-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-teal-600 transition"
