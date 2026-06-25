@@ -1,11 +1,9 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import {
   Map,
   MapMarker,
   MarkerContent,
-  MarkerPopup,
   MapControls,
 } from "@/components/ui/map";
 import type { MapViewport } from "@/components/ui/map";
@@ -32,6 +30,7 @@ export default function MapComponent({
     bearing: 0,
     pitch: 0,
   });
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     if (lat !== null && lng !== null) {
@@ -44,7 +43,7 @@ export default function MapComponent({
   }, [lat, lng]);
 
   return (
-    <div className="h-[400px] w-full rounded-2xl overflow-hidden border border-slate-200 relative">
+    <div className="h-100 w-full rounded-2xl overflow-hidden border border-slate-200 relative">
       <Map
         theme="light"
         viewport={viewport}
@@ -54,7 +53,10 @@ export default function MapComponent({
         {lat !== null && lng !== null && (
           <MapMarker latitude={lat} longitude={lng}>
             <MarkerContent>
-              <div className="w-7 h-7 rounded-full bg-[#00a991] border-[3px] border-white shadow-lg flex items-center justify-center">
+              <div
+                className="w-7 h-7 rounded-full bg-[#00a991] border-[3px] border-white shadow-lg flex items-center justify-center cursor-pointer"
+                onClick={() => setShowPopup((v) => !v)}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -65,15 +67,32 @@ export default function MapComponent({
                   <path d="M12 2L4 12h3v8h6v-6h2v6h6v-8h3L12 2z" />
                 </svg>
               </div>
+
+              {/* Popup murni React — tidak menyentuh Radix sama sekali */}
+              {showPopup && (
+                <div
+                  className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50
+                    bg-white border border-slate-200 rounded-md shadow-md
+                    p-3 w-52 text-sm"
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPopup(false);
+                    }}
+                    className="absolute top-1 right-1 text-slate-400 hover:text-slate-600"
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
+                  <p className="font-medium text-slate-800">{locationName}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    🌊 Pusat prakiraan energi angin 7 hari
+                  </p>
+                </div>
+              )}
             </MarkerContent>
-            <MarkerPopup>
-              <div className="space-y-1 p-1">
-                <p className="font-medium text-slate-800">{locationName}</p>
-                <p className="text-xs text-slate-500">
-                  🌊 Pusat prakiraan energi angin 7 hari
-                </p>
-              </div>
-            </MarkerPopup>
           </MapMarker>
         )}
       </Map>
