@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+  <img src="public/image-markdown/image.png" alt="Contoh Gambar" style="width:100%; heigh:30%; object-fit:cover">
+</div>
 
-## Getting Started
+<div align="center">
+  <pre color="blue">
+    <h1>MANUAL USER GUIDE</h1>                                             
+  </pre>
+</div>
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Feature:
+1. Forecasting Data ( 7 Hari )
+2. Analytics Data ( Real-time data )
+3. Upgrade Feature For User With Payment Gateway
+4. Limitation For User 
+5. Restore Snapshot For Generate 
+6. Edit Profile 
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Step Guide For User 
+## Forecasting Page 
+### Training dan Generate Data 
+1. Untuk di awal untuk metrics nya tidak ada, karna sudah di setting idle dulu agar tidak memberatkan servernya
+2. Upload Data berdasarkan dari template yang sudah memiliki validasi kolom yang sudah di sediakan 
+3. Terus tunnggu sekitar 40-50 Menit untuk Training data, dikarnakan dari banyak data yang di training per satu atribut.
+4. Setelah selesai di training, maka pengguna bisa memilih atribut yang ingin diforcesting ataupun bisa memilih best model untuk melakukan forecasting di semua atribut yang tersedia.
+5. Setelah berhasil di generate, maka user bisa mengunduh data yang sudah di generate dan bisa melihat Ringkasan Summary dari NLP. 
+6. User bisa melihat Overview yang berisi semua summary data dan juga Exploratory Data Analysis beserta Overfit Chart dan Prediksi vs Aktual Data
+7. User bisa memilih untuk menyimpan data yang sudah di train dan ter generate
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Restore & Generate 
+1. Untuk di awal untuk metrics nya tidak ada, karna sudah di setting idle dulu agar tidak memberatkan servernya
+2. Jika user ingin menggunakan restore pada salah satu data yang sudah di training dan generate, maka bisa restore untuk salah satu data yang diinginkan, lalu generate.
+4. Setelah berhasil di generate, maka user bisa mengunduh data yang sudah di generate dan bisa melihat Ringkasan Summary dari NLP. 
+5. User bisa melihat Overview yang berisi semua summary data dan juga Exploratory Data Analysis beserta Overfit Chart dan Prediksi vs Aktual Data
+6. User bisa memilih untuk menyimpan data yang sudah di train dan ter generate
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Analytics Page 
+1. User Bisa mencari Daerah yang diinginkan semisal Depok, lalu website akan mengambil data 7 hari yang akan di sediakan untuk user 
+2. Setelah berhasil mendapatkan data Real-time nya, use bisa melihat data dua card section yang satu **Arah Angin** dan satu lagi **Data Lengkap Cuaca**, beserta dengan Detail & Analisis Card yang dimana berisi sebuah ringkasan berita, juga memiliki Pipeline Validasi & Akurasi Pada Algoritma yang digunakan dalam proses Natural Language Processing.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## More Feature 
+
+## Histories Page 
+1. User di perlihatkan sebuah data table histories forecasting, yang dimana itu sebuah hasil dari data yang sudah di train dan generate
+2. User bisa mengunduh ataupun menghapus data yang sudah tersimpan di halaman historis 
+
+### Histories Payment Page 
+1. Di sini user bisa melihat pembayaran apa saja yang sudah dilakukan saat ingin meng-upgrade layanan yang disediakan.
+
+### Settings 
+1. Pada Section **Edit Profile**, user bisa mengubah data profile masing-masing user seperti username, password, profile, dan gmail. 
+2. Di Section **Manage Cache Section**, user bisa menonaktifkan / mengaktifkan Cache per setiap upload data. 
+3. Di Section **Manage Snapshot**, per tiap user yang memiliki tier **gratis** memiliki dua snapshot dan untuk tier **basic** memiliki 3 snapshot untuk melakukan restore yang sudah di train dan generate. Ketika Snapshot itu penuh pada saat melakukan forecasting, maka ada dua pilihan **menghapus** atau **restore** snapshot yang ada.
+
+

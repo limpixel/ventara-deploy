@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { QRCodeCanvas } from "qrcode.react"
 
 const TIER_AMOUNT: Record<string, number> = {
-  basic: 2000,
-  business: 299000,
+  basic: 299000,
+  business: 559000,
 }
 
 const TIER_LABEL: Record<string, string> = {
