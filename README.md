@@ -8,7 +8,13 @@
   </pre>
 </div>
 
-
+---
+# Team 
+1. Abdul Halim - Web DevOps 
+2. Anugerah Rachmat Indriansyah - Fullstack Developer
+3. M. Rangga Fabiano M - Data Science 
+4. Nail Rizq Widiyanto - Frontend Dev & Designer 
+5. Chesia Julian Pratiwi - Frontend Dev & Designer 
 
 
 ---
