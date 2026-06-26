@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/image-markdown/image.png" alt="Contoh Gambar" style="width:100%; heigh:30%; object-fit:cover">
+  <img src="public/image-markdown/pltb.gif" alt="Contoh Gambar" style="width:100%; heigh:30%; object-fit:cover">
 </div>
 
 <div align="center">
